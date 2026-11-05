@@ -54,6 +54,7 @@ jobs:
           FIREBASE_CONFIG_JSON: ${{ secrets.FIREBASE_CONFIG_JSON }}
         run: |
           test -n "$FIREBASE_CONFIG_JSON" || { echo "Secret FIREBASE_CONFIG_JSON ausente"; exit 1; }
+          mkdir -p config
           printf '%s' "$FIREBASE_CONFIG_JSON" > config/firebase.json
       - name: Build web
         run: >
