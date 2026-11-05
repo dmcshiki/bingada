@@ -156,7 +156,11 @@ class FakeRepo implements GameRepository {
   Future<void> setWinners(GameId id, List<Winner> winners) async {}
 
   @override
-  Future<void> chooseClaim(GameId id, ClaimId claimId, ClaimChoice choice) async {}
+  Future<void> chooseClaim(
+    GameId id,
+    ClaimId claimId,
+    ClaimChoice choice,
+  ) async {}
 
   @override
   Future<Game> createGame(Game draft) async => draft;
