@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – jogador após o grito</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; position: relative; overflow: hidden">
+  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; filter: blur(4px); opacity: .5" aria-hidden="true">
+    <div style="width: 560px; height: 600px; background: #ffffff; border-radius: 32px"></div>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(66,64,65,.55)"></div>
+  <div style="position: absolute; top: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: #ffffff; padding: 6px; border-radius: 24px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 0; background: {{t.bg}}; color: {{t.fg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px; cursor: pointer" onClick="{{t.go}}">{{t.n}}</button>
+    </sc-for>
+  </div>
+  <div role="dialog" aria-label="Resultado do seu BINGO" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 620px; background: #ffffff; border-radius: 32px; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center">
+    <div style="width: 150px; height: 150px; border-radius: 40px; transform: rotate(-8deg); background: {{s.color}}; color: {{s.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: {{s.iconSize}}">{{s.icon}}</div>
+    <span style="font-family: 'Days One', sans-serif; font-size: 40px; color: {{s.titleColor}}">{{s.title}}</span>
+    <span style="font-size: 18px; line-height: 1.5; max-width: 480px">{{s.text}}</span>
+    <sc-if value="{{s.showBtn}}" hint-placeholder-val="{{true}}">
+      <button style="height: 56px; padding: 0 28px; border-radius: 18px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 16px">{{s.btn}}</button>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { i: parseInt(p && p.step, 10) || 0 }; }
+  renderVals() {
+    var self = this;
+    var states = [
+      { n: 'Aguardando', icon: '…', iconSize: '64px', color: '#779ccf', fg: '#ffffff', titleColor: '#204a77', title: 'BINGO enviado!', text: 'O host está conferindo sua cartela. Nada de apagar carimbo agora.', showBtn: false, btn: '' },
+      { n: 'Válido', icon: '✓', iconSize: '80px', color: '#4ec45f', fg: '#123b19', titleColor: '#2e7d3a', title: 'VOCÊ GANHOU!', text: 'Horizontal · linha 2, na bola 23. Prêmio: Caneca. O jogo segue valendo o próximo prêmio.', showBtn: true, btn: 'Continuar jogando' },
+      { n: 'Comeu bola', icon: '✕', iconSize: '80px', color: '#914ec4', fg: '#ffffff', titleColor: '#914ec4', title: 'COMEU BOLA', text: 'Você marcou o G 52, que ainda não saiu. Esse grito não valeu, mas o jogo segue: confira a cartela e grite quando fechar de verdade.', showBtn: true, btn: 'Voltar à cartela' },
+      { n: 'Modalidade errada', icon: '!', iconSize: '80px', color: '#c679cc', fg: '#1a2b40', titleColor: '#424041', title: 'MODALIDADE ERRADA', text: 'Sua vertical fechou, mas agora vale Horizontal. Guarde a emoção para o próximo prêmio.', showBtn: true, btn: 'Voltar à cartela' }
+    ];
+    var i = this.state.i;
+    var tabs = states.map(function (s, k) { return { n: s.n, bg: k === i ? '#204a77' : '#ffffff', fg: k === i ? '#ffffff' : '#424041', go: function () { self.setState({ i: k }); } }; });
+    return { tabs: tabs, s: states[i] };
+  }
+}
+</script>
+</body>
+</html>

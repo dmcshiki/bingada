@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – tela de streamer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ffffff}a:hover{color:#e6e9e9}
+</style>
+</helmet>
+<div style="width: 1600px; height: 900px; box-sizing: border-box; background: #204a77; font-family: Montserrat, sans-serif; color: #ffffff; position: relative; overflow: hidden; display: grid; grid-template-columns: 520px minmax(0, 1fr) 400px; gap: 32px; padding: 40px 48px 120px">
+  <div style="position: absolute; right: -200px; top: -260px; width: 620px; height: 620px; border-radius: 150px; background: #1868a1; transform: rotate(-8deg)" aria-hidden="true"></div>
+  <div style="position: absolute; left: -160px; bottom: -300px; width: 560px; height: 560px; border-radius: 140px; background: #424041; transform: rotate(-8deg)" aria-hidden="true"></div>
+
+  <section style="position: relative; display: flex; flex-direction: column; gap: 8px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 30px; margin-bottom: 8px">tokingo</span>
+    <sc-for list="{{board}}" as="row" hint-placeholder-count="5">
+      <div style="display: flex; gap: 5px; align-items: center">
+        <span style="width: 40px; height: 40px; border-radius: 12px; background: {{row.bg}}; color: {{row.fg}}; font-family: 'Days One', sans-serif; font-size: 20px; display: flex; align-items: center; justify-content: center">{{row.l}}</span>
+        <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; flex: 1">
+          <sc-for list="{{row.n}}" as="n" hint-placeholder-count="15">
+            <span style="height: 40px; border-radius: 10px; background: {{n.bg}}; color: {{n.fg}}; font-family: 'Days One', sans-serif; font-size: 16px; display: flex; align-items: center; justify-content: center">{{n.v}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px">
+    <span style="font-size: 22px; font-weight: 300">bola <b style="font-weight: 700">atual</b></span>
+    <div style="width: 380px; height: 380px; border-radius: 96px; background: #09b5f0; transform: rotate(-8deg); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #1a2b40; box-shadow: 0 30px 60px rgba(0,0,0,.25)">
+      <span style="font-family: 'Days One', sans-serif; font-size: 64px; transform: rotate(8deg)">N</span>
+      <span style="font-family: 'Days One', sans-serif; font-size: 200px; line-height: 1; transform: rotate(8deg)">38</span>
+    </div>
+  </section>
+
+  <section style="position: relative; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: .06em">ÚLTIMAS BOLAS</span>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <sc-for list="{{last}}" as="b" hint-placeholder-count="5">
+          <span style="width: 68px; height: 68px; border-radius: 18px; background: #ffffff; color: #204a77; font-family: 'Days One', sans-serif; font-size: 20px; display: flex; align-items: center; justify-content: center">{{b}}</span>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <footer style="position: absolute; left: 48px; right: 48px; bottom: 28px; height: 72px; background: rgba(255,255,255,.12); border-radius: 22px; display: flex; align-items: center; gap: 24px; padding: 0 24px">
+    <span style="font-size: 20px">Sala <b style="font-family: 'Days One', sans-serif; letter-spacing: .1em">K7QP</b> · <b>fechada</b>: jogo em andamento</span>
+    <div style="flex: 1"></div>
+    <span style="font-size: 18px; font-weight: 500">Valendo: <b>Caneca</b> · Horizontal · 42 jogadores</span>
+  </footer>
+  <sc-if value="{{ovOne}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(20,40,64,.82); display: flex; align-items: center; justify-content: center">
+      <div style="width: 920px; background: #ffffff; color: #424041; border-radius: 40px; padding: 48px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; align-items: center">
+        <span style="width: 200px; height: 200px; border-radius: 52px; transform: rotate(-8deg); background: #779ccf; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 64px">MR</span>
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <span style="font-size: 18px; font-weight: 700; letter-spacing: .06em">{{ov.kicker}}</span>
+          <span style="font-family: 'Days One', sans-serif; font-size: 48px; color: #204a77">Marina Rocha</span>
+          <span style="align-self: flex-start; padding: 12px 20px; border-radius: 18px; background: {{ov.badgeBg}}; color: {{ov.badgeFg}}; font-family: 'Days One', sans-serif; font-size: 26px">{{ov.badge}}</span>
+          <span style="font-size: 20px; line-height: 1.4">{{ov.text}}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ovTie}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(20,40,64,.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px">
+      <span style="font-size: 18px; font-weight: 700; letter-spacing: .06em; padding: 8px 16px; border-radius: 18px; background: rgba(255,255,255,.14)">EMPATE · CANECA · HORIZONTAL · NA MESMA BOLA</span>
+      <span style="font-family: 'Days One', sans-serif; font-size: 56px">{{tie.title}}</span>
+      <div style="display: flex; gap: 56px; align-items: center">
+        <sc-for list="{{tie.players}}" as="p" hint-placeholder-count="2">
+          <div style="width: 400px; border-radius: 36px; padding: 36px; display: flex; flex-direction: column; align-items: center; gap: 16px; background: {{p.bg}}; color: {{p.fg}}; border: {{p.border}}; opacity: {{p.op}}">
+            <span style="width: 140px; height: 140px; border-radius: 38px; transform: rotate(-8deg); background: {{p.c}}; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 48px">{{p.i}}</span>
+            <span style="font-family: 'Days One', sans-serif; font-size: 32px">{{p.n}}</span>
+            <span style="font-size: 18px; font-weight: 700; padding: 8px 16px; border-radius: 14px; background: {{p.tagBg}}">{{p.tag}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 20px">{{tie.sub}}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"overlay":{"editor":"enum","options":["none","checking","claim","missed","tie","tieResult"],"default":"none"},"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var cols = [['#779ccf','#ffffff'],['#09b5f0','#1a2b40'],['#4ec45f','#1a2b40'],['#c679cc','#1a2b40'],['#914ec4','#ffffff']];
+    var drawn = {11:1,17:1,22:1,38:1,47:1,49:1,63:1,70:1,3:1,9:1,27:1,31:1,44:1,50:1,55:1,58:1,66:1,72:1,5:1,19:1,40:1,60:1,74:1};
+    var board = ['B','I','N','G','O'].map(function (l, i) {
+      var n = [];
+      for (var k = 1; k <= 15; k++) { var v = i * 15 + k; var d = !!drawn[v];
+        n.push({ v: v, bg: d ? cols[i][0] : 'rgba(255,255,255,.10)', fg: d ? cols[i][1] : '#b8c7dc' }); }
+      return { l: l, bg: cols[i][0], fg: cols[i][1], n: n };
+    });
+    var o = this.props.overlay || 'none';
+    var ovs = {
+      checking: { kicker: 'BINGO!', badge: 'O HOST ESTÁ CONFERINDO…', badgeBg: '#e6e9e9', badgeFg: '#204a77', text: 'Horizontal · valendo a Caneca. Segura o carimbo aí.' },
+      claim: { kicker: 'BINGO!', badge: 'VÁLIDO · Horizontal linha 2', badgeBg: '#2e8a3e', badgeFg: '#ffffff', text: 'Levou a Caneca. Agora vale: Vale-café · Vertical' },
+      missed: { kicker: 'BINGO?', badge: 'COMEU BOLA', badgeBg: '#914ec4', badgeFg: '#ffffff', text: 'Marcou o G 52, que ainda não saiu. O jogo continua valendo a Caneca.' }
+    };
+    var done = o === 'tieResult';
+    var tp = [{ i: 'MR', n: 'Marina Rocha', c: '#779ccf', win: true }, { i: 'PL', n: 'Pedro Lima', c: '#914ec4', win: false }].map(function (p) {
+      var w = done && p.win, l = done && !p.win;
+      return { i: p.i, n: p.n, c: p.c, bg: w ? '#ffffff' : 'rgba(255,255,255,.10)', fg: w ? '#204a77' : '#ffffff',
+        border: w ? '5px solid #4ec45f' : '2px solid rgba(255,255,255,.25)', op: l ? '0.5' : '1',
+        tag: w ? 'LEVOU A CANECA' : (l ? 'fica para o próximo' : 'bingo válido'), tagBg: w ? '#4ec45f' : 'rgba(255,255,255,.15)' };
+    });
+    return { ovOne: !!ovs[o], ov: ovs[o] || ovs.checking, ovTie: o === 'tie' || done,
+      tie: { title: done ? 'Desempate decidido!' : 'Sorteando o desempate…', sub: done ? 'Agora vale: Vale-café · Vertical' : 'Ninguém escolhe, nem o host: o sistema sorteia.', players: tp },
+      board: board, last: ['B11','O70','I17','G47','O63'] };
+  }
+}
+</script>
+</body>
+</html>

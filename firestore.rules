@@ -1,0 +1,167 @@
+rules_version = '2';
+// Tokingo security rules (spec §2, §7). No Cloud Functions: these rules are
+// the only server-side authority.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+    function email() { return request.auth.token.email.lower(); }
+    function emailDomain() { return email().split('@')[1]; }
+    function gamePath(gameId) {
+      return /databases/$(database)/documents/games/$(gameId);
+    }
+    function gameBefore(gameId) { return get(gamePath(gameId)).data; }
+    function gameAfter(gameId) { return getAfter(gamePath(gameId)).data; }
+
+    function accessAllows(access) {
+      return access.mode == 'public'
+        || (access.mode == 'domain' && emailDomain() in access.domains)
+        || (access.mode == 'sameAsHost' && emailDomain() == access.hostDomain)
+        || (access.mode == 'allowlist' && email() in access.emails);
+    }
+
+    match /rooms/{roomCode} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && roomCode.matches('^[A-HJ-NP-Z2-9]{4}$');
+      // Reusing a code: only when the previous game is over.
+      allow update: if signedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && gameBefore(resource.data.currentGameId).status
+             in ['finished', 'abandoned'];
+      allow delete: if false;
+    }
+
+    match /games/{gameId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.status == 'lobby'
+        && request.resource.data.playerCount == 0
+        && request.resource.data.maxPlayers <= 60
+        && request.resource.data.currentPrizeIndex == 0
+        && request.resource.data.draws.size() == 0
+        && request.resource.data.winners.size() == 0
+        && request.resource.data.drawSeed == null
+        && request.resource.data.access.mode
+             in ['domain', 'sameAsHost', 'allowlist', 'public'];
+
+      function immutableOk() {
+        return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['access', 'template', 'prizes', 'endOfGamePrizes',
+                   'prizePolicy', 'settings', 'salt', 'drawCommit',
+                   'hostUid', 'roomCode', 'maxPlayers', 'createdAt']);
+      }
+      function drawsOk() {
+        let before = resource.data.draws;
+        let after = request.resource.data.draws;
+        return after == before
+          || (resource.data.status == 'running'
+              && request.resource.data.status == 'running'
+              // Exactly one new ball, no repeats. (Avoids list slicing,
+              // which failed on the first draw where the prefix is empty.)
+              && after.size() == before.size() + 1
+              && after.hasAll(before)
+              && after.toSet().size() == after.size());
+      }
+      function statusOk() {
+        let a = resource.data.status;
+        let b = request.resource.data.status;
+        return a == b
+          || (a == 'lobby' && b in ['running', 'abandoned'])
+          || (a == 'running' && b in ['finished', 'abandoned']);
+      }
+      function seedOk() {
+        return request.resource.data.get('drawSeed', null)
+            == resource.data.get('drawSeed', null)
+          || (resource.data.get('drawSeed', null) == null
+              && request.resource.data.status in ['finished', 'abandoned']);
+      }
+      function changed() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+      // Join: any player may only bump playerCount by one alongside its card.
+      function joinIncrementOk() {
+        return changed().hasOnly(['playerCount'])
+          && resource.data.status == 'lobby'
+          && request.resource.data.playerCount == resource.data.playerCount + 1
+          && request.resource.data.playerCount <= resource.data.maxPlayers
+          && !exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid))
+          && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid));
+      }
+
+      allow update: if signedIn() && (
+        (resource.data.hostUid == request.auth.uid
+          && immutableOk() && drawsOk() && statusOk() && seedOk()
+          && request.resource.data.playerCount == resource.data.playerCount)
+        || joinIncrementOk()
+      );
+      allow delete: if false;
+
+      match /cards/{uid} {
+        allow read: if signedIn();
+        allow create: if verified()
+          && request.auth.uid == uid
+          // The host always plays in their own room (R7), whatever the policy.
+          && (request.auth.uid == gameBefore(gameId).hostUid
+              || accessAllows(gameBefore(gameId).access))
+          && gameBefore(gameId).status == 'lobby'
+          && gameBefore(gameId).playerCount < gameBefore(gameId).maxPlayers
+          && gameAfter(gameId).playerCount == gameBefore(gameId).playerCount + 1
+          && request.resource.data.items.size()
+             == gameBefore(gameId).template.rows * gameBefore(gameId).template.cols
+          && existsAfter(/databases/$(database)/documents/games/$(gameId)/players/$(uid));
+        allow update, delete: if false;
+      }
+
+      match /players/{uid} {
+        allow read: if signedIn();
+        allow create: if verified()
+          && request.auth.uid == uid
+          && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(uid));
+        allow update, delete: if false;
+      }
+
+      match /claims/{claimId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.verdict == null
+          && request.resource.data.get('choice', null) == null
+          && request.resource.data.get('offerPrizeId', null) == null
+          && gameBefore(gameId).status == 'running'
+          && request.resource.data.drawIndex == gameBefore(gameId).draws.size()
+          // Several prizes can be open at once (Horizontal + Vertical) and
+          // rules cannot search a list of maps: the host's verifier rejects
+          // a claim whose prize is not open.
+          && request.resource.data.prizeId is string
+          && request.resource.data.prizeId.size() > 0
+          && request.resource.data.prizeId.size() <= 64
+          && exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid));
+        allow update: if signedIn() && (
+          (gameBefore(gameId).hostUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'verdict', 'matched', 'offerPrizeId']))
+          // Winner already holding a prize answers keep/swap, once.
+          || (resource.data.uid == request.auth.uid
+            && resource.data.status == 'awaitingChoice'
+            && resource.data.get('choice', null) == null
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['choice'])
+            && request.resource.data.choice in ['keep', 'swap'])
+        );
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

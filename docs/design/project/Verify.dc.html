@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – verificar BINGO (web)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: rgba(66,64,65,.92); font-family: Montserrat, sans-serif; display: flex; align-items: center; justify-content: center">
+  <div role="dialog" aria-label="Verificar pedido de BINGO" style="width: 1040px; background: #ffffff; border-radius: 32px; padding: 36px; display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 40px; color: #424041; box-sizing: border-box">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{cells}}" as="c" hint-placeholder-count="25">
+          <div style="aspect-ratio: 1; border-radius: 16px; background: {{c.bg}}; border: {{c.border}}; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 22px; color: {{c.fg}}">{{c.v}}</div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; font-weight: 500">
+        <span><b style="color: #2e7d3a">✓</b> marcou e saiu (no padrão)</span>
+        <span><b style="color: #4f86c6">●</b> saiu</span>
+        <span><b style="color: #914ec4">✕</b> marcou e não saiu</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <div style="display: flex; align-items: center; gap: 14px">
+          <span style="width: 60px; height: 60px; border-radius: 18px; transform: rotate(-8deg); background: #779ccf; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 22px">MR</span>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-weight: 700; font-size: 20px">Marina Rocha</span>
+            <span style="font-size: 14px">gritou BINGO na bola 23 · valendo <b>Caneca</b> (Horizontal)</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px">
+          <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 2px solid #e6e9e9; background: {{tabValid}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 12px; color: #424041; cursor: pointer" onClick="{{showValid}}">ver válido</button>
+          <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 2px solid #e6e9e9; background: {{tabMissed}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 12px; color: #424041; cursor: pointer" onClick="{{showMissed}}">ver comeu bola</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="padding: 8px 14px; border-radius: 16px; background: #e6e9e9; font-size: 14px; font-weight: 700">Tipo detectado: {{kind}}</span>
+      </div>
+      <div style="border-radius: 24px; padding: 24px; background: {{vBg}}; color: #ffffff; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Days One', sans-serif; font-size: 40px">{{vTitle}}</span>
+        <span style="font-size: 17px; font-weight: 500">{{vSub}}</span>
+      </div>
+
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+        <li>✓ Cartela confere com a seed (uid + jogo + salt)</li>
+        <li>{{chk2}}</li>
+        <li>✓ Validado com as 23 bolas sorteadas até o grito</li>
+      </ul>
+
+      <div style="flex: 1"></div>
+      <sc-if value="{{noTie}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; font-weight: 500">Janela de gritos da bola N 38: aberta até você sortear a próxima. Nenhum outro grito válido até agora.</span>
+          <div style="display: flex; gap: 12px">
+            <button style="flex: 1; height: 60px; border-radius: 18px; border: 2px solid #424041; background: {{rejBg}}; color: {{rejFg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 16px; cursor: pointer">Rejeitar</button>
+            <button style="flex: 1; height: 60px; border-radius: 18px; border: 2px solid #204a77; background: {{okBg}}; color: {{okFg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 16px; cursor: pointer">Confirmar vencedor</button>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{tie}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 20px; background: #eef3fa; border: 2px solid #204a77">
+          <span style="font-family: 'Days One', sans-serif; font-size: 22px; color: #204a77">Empate detectado</span>
+          <span style="font-size: 15px; line-height: 1.45"><b>Pedro Lima</b> também gritou um BINGO válido (Horizontal · linha 4) na mesma bola, N 38. Pela regra da sala, o prêmio vai para sorteio.</span>
+          <a href="Tiebreak.dc.html" style="height: 60px; border-radius: 18px; background: #204a77; color: #ffffff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; text-decoration: none">Ir para o sorteio de desempate</a>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["normal","tie"],"default":"normal"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { missed: false }; }
+  renderVals() {
+    var missed = this.state.missed;
+    var grid = [[4,22,35,49,63],[11,17,38,52,70],[2,29,'★',47,61],[14,19,41,58,74],[7,25,33,46,68]];
+    var drawn = { 22:1, 38:1, 49:1, 63:1, 17:1, 11:1, 70:1, 47:1 };
+    if (!missed) drawn[52] = 1;
+    var cells = [];
+    for (var r = 0; r < 5; r++) for (var c = 0; c < 5; c++) {
+      var v = grid[r][c]; var inRow = r === 1;
+      var cell = { v: v, bg: '#e6e9e9', border: '2px solid #e6e9e9', fg: '#424041' };
+      if (drawn[v]) { cell.bg = '#dce6f4'; cell.fg = '#204a77'; }
+      if (inRow && drawn[v]) { cell.bg = '#4ec45f'; cell.fg = '#123b19'; cell.v = v + '✓'; }
+      if (inRow && !drawn[v]) { cell.bg = '#f3eafa'; cell.border = '2px dashed #914ec4'; cell.fg = '#914ec4'; cell.v = v + '✕'; }
+      cells.push(cell);
+    }
+    var self = this;
+    var tie = this.props.mode === 'tie' && !missed;
+    return {
+      tie: tie, noTie: !tie,
+      cells: cells,
+      vBg: missed ? '#914ec4' : '#2e8a3e',
+      vTitle: missed ? 'COMEU BOLA' : 'BINGO VÁLIDO',
+      vSub: missed ? 'Marcou o G 52, que ainda não saiu. Linha 2 incompleta.' : 'Horizontal · linha 2 completa na bola nº 23.',
+      kind: missed ? 'nenhum padrão completo' : 'Horizontal · linha 2',
+      chk2: missed ? '✕ Horizontal incompleta (1 de 5 não sorteado)' : '✓ Modalidade do prêmio atual: Horizontal',
+      tabValid: missed ? '#ffffff' : '#e6e9e9', tabMissed: missed ? '#e6e9e9' : '#ffffff',
+      okBg: missed ? '#ffffff' : '#204a77', okFg: missed ? '#204a77' : '#ffffff',
+      rejBg: missed ? '#424041' : '#ffffff', rejFg: missed ? '#ffffff' : '#424041',
+      showValid: function () { self.setState({ missed: false }); },
+      showMissed: function () { self.setState({ missed: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

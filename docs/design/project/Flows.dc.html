@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – mapa de fluxos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 3200px; height: 1400px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; padding: 56px 64px; display: flex; flex-direction: column; gap: 36px">
+  <div style="display: flex; align-items: baseline; gap: 24px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 40px; color: #204a77">tokingo</span>
+    <h1 style="margin: 0; font-weight: 300; font-size: 40px">mapa de <b style="font-weight: 700">fluxos</b></h1>
+    <span style="font-size: 18px">Clique numa tela para ir até ela. Abaixo de cada passo ficam os desvios e estados.</span>
+  </div>
+  <sc-for list="{{lanes}}" as="lane" hint-placeholder-count="4">
+    <section style="background: #ffffff; border-radius: 32px; padding: 28px 32px; display: flex; gap: 28px; align-items: flex-start">
+      <div style="width: 220px; flex: none; display: flex; flex-direction: column; gap: 8px">
+        <span style="width: 56px; height: 56px; border-radius: 16px; transform: rotate(-8deg); background: {{lane.c}}"></span>
+        <span style="font-family: 'Days One', sans-serif; font-size: 26px; color: #204a77">{{lane.name}}</span>
+        <span style="font-size: 14px; line-height: 1.4">{{lane.desc}}</span>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap">
+        <sc-for list="{{lane.steps}}" as="s" hint-placeholder-count="8">
+          <div style="display: flex; gap: 14px; align-items: flex-start">
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 210px">
+              <a href="{{s.href}}" style="text-decoration: none; color: #ffffff; background: {{lane.c}}; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-height: 64px; box-sizing: border-box">
+                <span style="font-family: 'Days One', sans-serif; font-size: 16px">{{s.n}}</span>
+                <span style="font-size: 14px; font-weight: 700">{{s.t}}</span>
+              </a>
+              <sc-for list="{{s.br}}" as="b" hint-placeholder-count="1">
+                <a href="{{b.href}}" style="text-decoration: none; color: #424041; background: #f4f6f6; border: 2px dashed {{lane.c}}; border-radius: 14px; padding: 10px 12px; font-size: 13px; display: flex; gap: 6px">
+                  <b>{{b.n}}</b><span>{{b.t}}</span>
+                </a>
+              </sc-for>
+            </div>
+            <sc-if value="{{s.arrow}}" hint-placeholder-val="{{true}}">
+              <span style="font-family: 'Days One', sans-serif; font-size: 28px; color: {{lane.c}}; line-height: 64px" aria-hidden="true">→</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":3200,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function st(n, t, href, br) { return { n: n, t: t, href: href, br: br || [], arrow: true }; }
+    function b(n, t, href) { return { n: n, t: t, href: href }; }
+    function lane(name, desc, c, steps) { steps[steps.length - 1].arrow = false; return { name: name, desc: desc, c: c, steps: steps }; }
+    var lanes = [
+      lane('Jogador', 'Entra pelo link ou código, joga com a cartela e grita BINGO.', '#779ccf', [
+        st('01', 'Entrar + Como jogar', 'Login.dc.html', [b('01b', 'Passo 2', 'LoginStep2.dc.html'), b('01c', 'Passo 3', 'LoginStep3.dc.html'), b('01d', 'Passo 4', 'LoginStep4.dc.html')]),
+        st('02', 'Lobby · código', 'Lobby.dc.html', [b('15e', 'Código inválido', 'ErrInvalid.dc.html'), b('15', 'Sem acesso', 'Errors.dc.html'), b('15b', 'Sala cheia', 'ErrFull.dc.html'), b('15c', 'Já começou', 'ErrStarted.dc.html'), b('15d', 'Encerrado', 'ErrEnded.dc.html')]),
+        st('08', 'Sala de espera', 'WaitingPlayer.dc.html'),
+        st('09', 'Jogo', 'Main.dc.html', [b('09b', 'Penalidade (futuro)', 'MainPenalty.dc.html'), b('09c', 'Prêmio entregue', 'MainPrize.dc.html'), b('09d', 'Host offline', 'MainOffline.dc.html'), b('09e', 'Como jogar', 'MainHelp.dc.html')]),
+        st('10', 'Gritou BINGO', 'PlayerClaim.dc.html', [b('10b', 'Válido', 'ClaimValid.dc.html'), b('10c', 'Comeu bola', 'ClaimMissed.dc.html'), b('10d', 'Modalidade errada', 'ClaimWrong.dc.html')]),
+        st('14', 'Fim de jogo', 'GameOver.dc.html'),
+        st('16', 'Auditoria', 'Audit.dc.html')
+      ]),
+      lane('Host', 'Cria a sala, canta as bolas, confere os gritos e também joga.', '#204a77', [
+        st('01', 'Entrar', 'Login.dc.html'),
+        st('02', 'Lobby · criar', 'Lobby.dc.html'),
+        st('03', 'Acesso', 'CreateAccess.dc.html'),
+        st('04', 'Cartela', 'CreateCard.dc.html'),
+        st('05', 'Prêmios', 'Prizes.dc.html'),
+        st('06', 'Regras e revisão', 'CreateReview.dc.html'),
+        st('07', 'Espera · QR', 'WaitingHost.dc.html'),
+        st('11', 'Painel', 'Host.dc.html', [b('11b', 'Minha cartela', 'HostCard.dc.html'), b('11c', 'Encerrar partida', 'HostEnd.dc.html')]),
+        st('12', 'Verificar BINGO', 'Verify.dc.html', [b('12a', 'Empate detectado', 'VerifyTie.dc.html')]),
+        st('12b', 'Sorteio de desempate', 'Tiebreak.dc.html'),
+        st('14', 'Fim · novo jogo → 06', 'GameOver.dc.html')
+      ]),
+      lane('Telão', 'Janela que o host transmite. Sem nenhum controle de admin.', '#09b5f0', [
+        st('13', 'Streamer', 'Stream.dc.html'),
+        st('13b', 'Host conferindo', 'StreamChecking.dc.html', [b('13c', 'BINGO válido', 'StreamClaim.dc.html'), b('13d', 'Comeu bola', 'StreamMissed.dc.html')]),
+        st('13e', 'Sorteando desempate', 'StreamTie.dc.html', [b('13f', 'Desempate decidido', 'StreamTieResult.dc.html')]),
+        st('13', 'Volta ao jogo · próximo prêmio', 'Stream.dc.html'),
+        st('14', 'Fim de jogo', 'GameOver.dc.html')
+      ]),
+      lane('Público', 'Qualquer pessoa, depois do jogo ou sem conseguir entrar.', '#914ec4', [
+        st('15c', 'Já começou → assistir', 'ErrStarted.dc.html'),
+        st('13', 'Streamer (espectador)', 'Stream.dc.html'),
+        st('14', 'Resultado', 'GameOver.dc.html'),
+        st('16', 'Auditoria pública', 'Audit.dc.html')
+      ])
+    ];
+    return { lanes: lanes };
+  }
+}
+</script>
+</body>
+</html>

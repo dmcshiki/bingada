@@ -1,0 +1,31 @@
+build/
+.dart_tool/
+*.iml
+.idea/
+.env
+
+# Firebase local config (dart-define-from-file) and native config files
+config/firebase.json
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+config/*.json
+!config/firebase.example.json
+
+# Machine-specific files (absolute local paths)
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+
+# Firebase CLI cache and logs
+.firebase/
+*-debug.log
+
+# Signing material
+*.jks
+*.keystore
+*.p12
+*.p8
+*.pem
+*.mobileprovision
+android/key.properties
+.env.*

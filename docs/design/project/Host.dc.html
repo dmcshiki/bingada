@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – painel do host</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; position: relative; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; display: flex; flex-direction: column">
+  <header style="height: 72px; background: #424041; color: #ffffff; display: flex; align-items: center; justify-content: space-between; padding: 0 28px">
+    <div style="display: flex; align-items: center; gap: 18px">
+      <span style="font-family: 'Days One', sans-serif; font-size: 24px">tokingo</span>
+      <span style="font-weight: 300; font-size: 16px">painel do <b style="font-weight: 700">host</b> · Sala K7QP · Happy hour de sexta</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center">
+      <span style="font-size: 13px; background: #204a77; padding: 8px 12px; border-radius: 16px">Acesso: @suaempresa.com.br</span>
+      <a href="Stream.dc.html" style="height: 44px; padding: 0 18px; border-radius: 22px; background: #779ccf; color: #ffffff; font-weight: 700; font-size: 14px; display: flex; align-items: center; text-decoration: none">Abrir tela de transmissão ↗</a>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: grid; grid-template-columns: 420px minmax(0, 1fr) 420px; gap: 20px; padding: 20px">
+    <section style="background: #ffffff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-weight: 300; font-size: 20px">tabela de <b style="font-weight: 700">bolas</b></h2>
+      <sc-for list="{{board}}" as="row" hint-placeholder-count="5">
+        <div style="display: flex; gap: 4px; align-items: center">
+          <span style="width: 30px; height: 30px; border-radius: 10px; background: {{row.bg}}; color: {{row.fg}}; font-family: 'Days One', sans-serif; font-size: 15px; display: flex; align-items: center; justify-content: center">{{row.l}}</span>
+          <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; flex: 1">
+            <sc-for list="{{row.n}}" as="n" hint-placeholder-count="15">
+              <span style="height: 30px; border-radius: 8px; background: {{n.bg}}; color: {{n.fg}}; font-family: 'Days One', sans-serif; font-size: 12px; display: flex; align-items: center; justify-content: center">{{n.v}}</span>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <div style="flex: 1"></div>
+      <span style="font-size: 12px">Commit do sorteio: <code>9f3a…c21e</code> · revelado ao fim</span>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 20px">
+      <div style="flex: 1; background: #204a77; border-radius: 24px; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; position: relative; overflow: hidden">
+        <div style="position: absolute; left: -90px; bottom: -120px; width: 320px; height: 320px; border-radius: 80px; background: #1868a1; transform: rotate(-8deg)" aria-hidden="true"></div>
+        <span style="position: relative; font-size: 14px; font-weight: 500">bola 23 de 75 · valendo: Caneca (Horizontal)</span>
+        <div style="position: relative; width: 230px; height: 230px; border-radius: 58px; background: #09b5f0; transform: rotate(-8deg); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #1a2b40">
+          <span style="font-family: 'Days One', sans-serif; font-size: 36px; transform: rotate(8deg)">N</span>
+          <span style="font-family: 'Days One', sans-serif; font-size: 110px; line-height: 1; transform: rotate(8deg)">38</span>
+        </div>
+        <div style="position: relative; display: flex; gap: 12px">
+          <button style="height: 64px; padding: 0 44px; border: 0; border-radius: 22px; background: #ffffff; color: #204a77; font-family: 'Days One', sans-serif; font-size: 24px">SORTEAR</button>
+        </div>
+      </div>
+      <div style="background: #ffffff; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 16px">
+        <span style="font-weight: 700; font-size: 14px">Minha cartela</span>
+        
+        <div style="flex: 1"></div>
+        <a href="HostCard.dc.html" style="height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid #779ccf; background: #ffffff; color: #204a77; font-weight: 700; font-size: 13px; display: flex; align-items: center; text-decoration: none">Abrir minha cartela</a>
+        <a href="HostEnd.dc.html" style="height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid #424041; background: #ffffff; color: #424041; font-weight: 700; font-size: 13px; display: flex; align-items: center; text-decoration: none">Encerrar partida</a>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 20px">
+      <div style="background: #ffffff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-weight: 300; font-size: 20px">pedidos de <b style="font-weight: 700">bingo</b></h2>
+        <a href="Verify.dc.html" style="text-decoration: none; color: #424041; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: #eaf6ec">
+          <span style="width: 40px; height: 40px; border-radius: 12px; transform: rotate(-8deg); background: #779ccf; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 14px">MR</span>
+          <span style="flex: 1; font-size: 14px"><b>Marina Rocha</b><br>Horizontal · linha 2 · bola 23</span>
+          <span style="font-size: 12px; font-weight: 700; color: #2e7d3a">✓ válido</span>
+        </a>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: #f3eafa">
+          <span style="width: 40px; height: 40px; border-radius: 12px; transform: rotate(-8deg); background: #c679cc; color: #1a2b40; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 14px">PL</span>
+          <span style="flex: 1; font-size: 14px"><b>Pedro Lima</b><br>Horizontal · bola 21</span>
+          <span style="font-size: 12px; font-weight: 700; color: #914ec4">✕ comeu bola</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-weight: 300; font-size: 20px"><b style="font-weight: 700">prêmios</b></h2>
+        <sc-for list="{{prizes}}" as="z" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 8px 10px; border-radius: 12px; background: {{z.bg}}">
+            <span style="font-family: 'Days One', sans-serif; width: 22px">{{z.o}}</span>
+            <span style="flex: 1"><b>{{z.label}}</b> · {{z.kind}}</span>
+            <span style="font-size: 12px; font-weight: 700">{{z.st}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex: 1; background: #ffffff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-weight: 300; font-size: 20px">jogadores <b style="font-weight: 700">42/60</b></h2>
+        <sc-for list="{{players}}" as="p" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+            <span style="width: 32px; height: 32px; border-radius: 10px; transform: rotate(-8deg); background: {{p.c}}; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 12px; font-weight: 700">{{p.i}}</span>
+            <span style="flex: 1">{{p.n}}</span>
+            <span style="font-size: 12px; color: {{p.tc}}">{{p.t}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+  <sc-if value="{{ending}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(66,64,65,.8); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="Encerrar partida" style="width: 640px; background: #ffffff; border-radius: 32px; padding: 40px; display: flex; flex-direction: column; gap: 16px">
+        <span style="font-family: 'Days One', sans-serif; font-size: 32px; color: #204a77">Encerrar a partida agora?</span>
+        <span style="font-size: 16px; line-height: 1.5">Ainda faltam 2 prêmios (Vale-café e Fone bluetooth). Eles não serão entregues. O azarão é calculado com as bolas sorteadas até aqui, e a seed é revelada para auditoria.</span>
+        <span style="font-size: 14px; padding: 12px 14px; border-radius: 14px; background: #f3eafa; color: #5c2f86"><b>Não dá para desfazer.</b> A partida fica marcada como “encerrada pelo host”.</span>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px">
+          <a href="Host.dc.html" style="height: 56px; padding: 0 22px; border-radius: 18px; border: 2px solid #424041; color: #424041; font-weight: 700; font-size: 15px; display: flex; align-items: center; text-decoration: none">Continuar jogando</a>
+          <a href="GameOver.dc.html" style="height: 56px; padding: 0 22px; border-radius: 18px; background: #914ec4; color: #ffffff; font-weight: 700; font-size: 15px; display: flex; align-items: center; text-decoration: none">Encerrar partida</a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["normal","end"],"default":"normal"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var cols = [['#779ccf','#ffffff'],['#09b5f0','#1a2b40'],['#4ec45f','#1a2b40'],['#c679cc','#1a2b40'],['#914ec4','#ffffff']];
+    var drawn = {11:1,17:1,22:1,38:1,47:1,49:1,63:1,70:1,3:1,9:1,27:1,31:1,44:1,50:1,55:1,58:1,66:1,72:1,5:1,19:1,40:1,60:1,74:1};
+    var board = ['B','I','N','G','O'].map(function (l, i) {
+      var n = [];
+      for (var k = 1; k <= 15; k++) { var v = i * 15 + k; var d = !!drawn[v];
+        n.push({ v: v, bg: v === 38 ? '#09b5f0' : (d ? cols[i][0] : '#e6e9e9'), fg: (d || v === 38) ? cols[i][1] : '#6b6869' }); }
+      return { l: l, bg: cols[i][0], fg: cols[i][1], n: n };
+    });
+    var players = [
+      { i: 'AS', n: 'Ana Souza', t: 'online', c: '#204a77', tc: '#2e7d3a' },
+      { i: 'JC', n: 'João Costa', t: 'online', c: '#1868a1', tc: '#2e7d3a' },
+      { i: 'BR', n: 'Bia Ramos', t: 'online', c: '#4f86c6', tc: '#2e7d3a' },
+      { i: 'DM', n: 'Daniel (host)', t: 'online', c: '#424041', tc: '#2e7d3a' },
+      { i: 'LF', n: 'Lucas Ferreira', t: 'online', c: '#779ccf', tc: '#2e7d3a' }
+    ];
+    var prizes = [
+      { o: '1', label: 'Caneca', kind: 'Horizontal', st: 'valendo', bg: '#dce6f4' },
+      { o: '2', label: 'Vale-café', kind: 'Vertical', st: '', bg: '#ffffff' },
+      { o: '3', label: 'Fone', kind: 'Cartela cheia', st: '', bg: '#ffffff' },
+      { o: '4', label: 'Prêmio azarão', kind: 'Azarão', st: 'no fim', bg: '#ffffff' }
+    ];
+    return { ending: this.props.mode === 'end', board: board, players: players.slice(0, 3), prizes: prizes };
+  }
+}
+</script>
+</body>
+</html>

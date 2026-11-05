@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – erros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; position: relative; overflow: hidden; display: flex; flex-direction: column">
+  <div style="position: absolute; left: -200px; bottom: -280px; width: 600px; height: 600px; background: #d3dbe6; border-radius: 150px; transform: rotate(-8deg)" aria-hidden="true"></div>
+  <header style="position: relative; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 26px; color: #204a77">tokingo</span>
+    <div style="display: flex; gap: 6px; background: #ffffff; padding: 6px; border-radius: 22px">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+        <button style="height: 38px; padding: 0 12px; border-radius: 19px; border: 0; background: {{t.bg}}; color: {{t.fg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 12px; cursor: pointer" onClick="{{t.go}}">{{t.n}}</button>
+      </sc-for>
+    </div>
+  </header>
+  <main style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center">
+    <section style="width: 760px; background: #ffffff; border-radius: 36px; padding: 52px; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 40px; align-items: center">
+      <div style="width: 180px; height: 180px; border-radius: 46px; transform: rotate(-8deg); background: {{e.color}}; color: {{e.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: {{e.size}}">{{e.icon}}</div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <h1 style="margin: 0; font-family: 'Days One', sans-serif; font-weight: 400; font-size: 34px; color: #204a77">{{e.title}}</h1>
+        <p style="margin: 0; font-size: 17px; line-height: 1.5">{{e.text}}</p>
+        <div style="display: flex; gap: 12px; margin-top: 8px">
+          <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">{{e.primary}}</button>
+          <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 2px solid #424041; background: #ffffff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">{{e.secondary}}</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { i: parseInt(p && p.step, 10) || 0 }; }
+  renderVals() {
+    var self = this;
+    var errs = [
+      { n: 'Sem acesso', icon: '@', size: '80px', color: '#914ec4', fg: '#ffffff', title: 'Opa, essa sala é fechada', text: 'Ela aceita só contas @suaempresa.com.br, e você entrou com joao@gmail.com. Troca de conta?', primary: 'Trocar de conta', secondary: 'Voltar ao início' },
+      { n: 'Sala cheia', icon: '60', size: '64px', color: '#424041', fg: '#ffffff', title: 'Sala cheia: 60/60', text: 'Todas as cartelas já têm dono. Avise o host. Se alguém sair antes do início, a vaga reabre.', primary: 'Tentar de novo', secondary: 'Voltar ao início' },
+      { n: 'Já começou', icon: '▶', size: '64px', color: '#779ccf', fg: '#ffffff', title: 'O jogo já começou', text: 'Novas cartelas não entram depois da primeira bola. Você pode assistir pela tela de transmissão.', primary: 'Assistir', secondary: 'Voltar ao início' },
+      { n: 'Encerrada', icon: '✓', size: '72px', color: '#4ec45f', fg: '#123b19', title: 'Esse jogo acabou', text: 'O último prêmio já saiu. Confira os vencedores e audite a partida.', primary: 'Ver resultado', secondary: 'Voltar ao início' },
+      { n: 'Código inválido', icon: '?', size: '80px', color: '#c679cc', fg: '#1a2b40', title: 'Não achamos essa sala', text: 'Confira o código com o host. São 4 caracteres, como K7QP.', primary: 'Digitar de novo', secondary: 'Como jogar' }
+    ];
+    var i = this.state.i;
+    var tabs = errs.map(function (e, k) { return { n: e.n, bg: k === i ? '#204a77' : '#ffffff', fg: k === i ? '#ffffff' : '#424041', go: function () { self.setState({ i: k }); } }; });
+    return { tabs: tabs, e: errs[i] };
+  }
+}
+</script>
+</body>
+</html>

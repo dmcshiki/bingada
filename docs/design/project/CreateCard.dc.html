@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – criar sala: cartela</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; display: flex; flex-direction: column">
+  <header style="height: 72px; display: flex; align-items: center; gap: 32px; padding: 0 40px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 26px; color: #204a77">tokingo</span>
+    <nav style="display: flex; gap: 8px; font-size: 14px; font-weight: 700" aria-label="Etapas">
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">1 Acesso ✓</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #204a77; color: #ffffff">2 Cartela</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">3 Prêmios</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">4 Regras</span>
+    </nav>
+  </header>
+  <main style="flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 500px; gap: 28px; padding: 16px 40px 32px">
+    <section style="background: #ffffff; border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 18px">
+      <h1 style="margin: 0; font-weight: 300; font-size: 30px">monte a <b style="font-weight: 700">cartela</b></h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="font-size: 13px; font-weight: 700; align-self: center; margin-right: 6px">Modelos:</span>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 0; background: #204a77; color: #fff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px">Clássico 75</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 2px solid #e6e9e9; background: #fff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px">Buzzwords Dev</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 2px solid #e6e9e9; background: #fff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px">Em branco</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 2px solid #e6e9e9; background: #fff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px">Importar JSON</button>
+      </div>
+      <div style="display: flex; gap: 16px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700">Tamanho
+          <select style="height: 44px; width: 140px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 10px; font-family: Montserrat, sans-serif; font-size: 15px; background: #fff"><option>5 × 5</option><option>4 × 4</option><option>3 × 3</option></select>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700">Centro livre
+          <select style="height: 44px; width: 200px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 10px; font-family: Montserrat, sans-serif; font-size: 15px; background: #fff"><option>Sim · texto “★”</option><option>Sim · imagem</option><option>Não</option></select>
+        </label>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: grid; grid-template-columns: 70px 90px 150px minmax(0, 1fr) 90px; gap: 10px; font-size: 12px; font-weight: 700; padding: 0 6px">
+          <span>Título</span><span>Cor</span><span>Tipo</span><span>Conteúdo</span><span>Itens</span>
+        </div>
+        <sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 70px 90px 150px minmax(0, 1fr) 90px; gap: 10px; align-items: center; background: #f4f6f6; border-radius: 16px; padding: 8px 6px">
+            <input value="{{c.h}}" aria-label="Título da coluna" style="height: 44px; border-radius: 12px; border: 2px solid #e6e9e9; text-align: center; font-family: 'Days One', sans-serif; font-size: 18px; width: 100%; box-sizing: border-box">
+            <span style="height: 44px; border-radius: 12px; background: {{c.bg}}" aria-label="Cor da coluna"></span>
+            <select aria-label="Tipo" style="height: 44px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 8px; font-family: Montserrat, sans-serif; font-size: 14px; background: #fff"><option>{{c.type}}</option></select>
+            <input value="{{c.content}}" aria-label="Conteúdo" style="height: 44px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 12px; font-family: Montserrat, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box">
+            <span style="font-size: 13px; font-weight: 700; color: {{c.okc}}">{{c.count}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex: 1"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 12px">
+        <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 2px solid #424041; background: #ffffff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">Voltar</button>
+        <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 2px solid #204a77; background: #ffffff; color: #204a77; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">Salvar como modelo</button>
+        <button style="height: 52px; padding: 0 26px; border-radius: 16px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">Próximo: prêmios</button>
+      </div>
+    </section>
+    <section style="background: #204a77; border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 16px; color: #fff">
+      <span style="font-weight: 300; font-size: 22px">prévia <b style="font-weight: 700">aleatória</b></span>
+      <div style="background: #ffffff; border-radius: 24px; padding: 16px">
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px">
+          <sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+            <div style="height: 40px; border-radius: 20px; background: {{c.bg}}; color: {{c.fg}}; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 18px">{{c.h}}</div>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{preview}}" as="v" hint-placeholder-count="25">
+            <div style="aspect-ratio: 1; border-radius: 12px; border: 2px solid #e6e9e9; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Days One', sans-serif; font-size: {{v.fs}}; color: #424041; padding: 2px; line-height: 1.1">{{v.t}}</div>
+          </sc-for>
+        </div>
+      </div>
+      <button style="height: 48px; border-radius: 16px; border: 2px solid #ffffff; background: transparent; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px">Gerar outra prévia</button>
+      <span style="font-size: 13px; line-height: 1.5">Cada coluna precisa de pelo menos 5 itens. A cartela de cada jogador sai da seed (conta + jogo + salt) e pode ser auditada.</span>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var cols = [
+      { h: 'B', bg: '#779ccf', fg: '#fff', type: 'Faixa de números', content: '1 – 15', count: '15 ✓', okc: '#2e7d3a' },
+      { h: 'I', bg: '#09b5f0', fg: '#1a2b40', type: 'Faixa de números', content: '16 – 30', count: '15 ✓', okc: '#2e7d3a' },
+      { h: 'N', bg: '#4ec45f', fg: '#1a2b40', type: 'Lista de textos', content: 'Daily, Deploy na sexta, Bug em prod, Café, Reunião que era e-mail…', count: '12 ✓', okc: '#2e7d3a' },
+      { h: 'G', bg: '#c679cc', fg: '#1a2b40', type: 'Faixa de números', content: '46 – 60', count: '15 ✓', okc: '#2e7d3a' },
+      { h: 'O', bg: '#914ec4', fg: '#fff', type: 'Faixa de números', content: '61 – 75', count: '15 ✓', okc: '#2e7d3a' }
+    ];
+    var g = [[3,17,'Daily',49,62],[11,22,'Bug em prod',55,70],[8,19,'★',47,66],[14,28,'Café',51,73],[1,16,'Deploy na sexta',58,61]];
+    var preview = [];
+    for (var r = 0; r < 5; r++) for (var c = 0; c < 5; c++) { var t = String(g[r][c]); preview.push({ t: t, fs: t.length > 4 ? '11px' : '20px' }); }
+    return { cols: cols, preview: preview };
+  }
+}
+</script>
+</body>
+</html>

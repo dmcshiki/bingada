@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – sorteio de desempate</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ffffff}a:hover{color:#e6e9e9}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 48px 72px; gap: 26px">
+  <div style="position: absolute; right: -180px; top: -220px; width: 560px; height: 560px; border-radius: 140px; background: #1868a1; transform: rotate(-8deg)" aria-hidden="true"></div>
+  <div style="position: absolute; left: -200px; bottom: -280px; width: 560px; height: 560px; border-radius: 140px; background: #424041; transform: rotate(-8deg)" aria-hidden="true"></div>
+
+  <span style="position: relative; font-size: 15px; font-weight: 700; letter-spacing: .06em; padding: 8px 16px; border-radius: 18px; background: rgba(255,255,255,.12)">EMPATE · CANECA · HORIZONTAL · MESMA BOLA (N 38)</span>
+  <h1 style="position: relative; margin: 0; font-weight: 300; font-size: 54px; text-align: center">dois bingos, <b style="font-weight: 700">uma caneca</b></h1>
+  <span style="position: relative; font-size: 17px; text-align: center; max-width: 760px; line-height: 1.5">Os dois gritos são válidos e fecharam na mesma bola. O desempate é sorteado pelo sistema: ninguém escolhe o resultado, nem o host. Esta tela aparece também no telão.</span>
+
+  <section style="position: relative; display: flex; gap: 48px; align-items: center; margin-top: 12px">
+    <sc-for list="{{players}}" as="p" hint-placeholder-count="2">
+      <div style="width: 360px; background: {{p.bg}}; color: {{p.fg}}; border-radius: 32px; padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 16px; border: {{p.border}}; opacity: {{p.op}}">
+        <span style="width: 120px; height: 120px; border-radius: 32px; transform: rotate(-8deg); background: {{p.c}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif; font-size: 40px">{{p.i}}</span>
+        <span style="font-family: 'Days One', sans-serif; font-size: 28px">{{p.n}}</span>
+        <span style="font-size: 14px">Horizontal · {{p.line}}</span>
+        <span style="font-size: 15px; font-weight: 700; padding: 8px 14px; border-radius: 14px; background: {{p.tagBg}}">{{p.tag}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <div style="position: relative; flex: 1"></div>
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px">
+    <sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+      <button style="height: 72px; padding: 0 48px; border-radius: 24px; border: 0; background: #ffffff; color: #204a77; font-family: 'Days One', sans-serif; font-size: 26px; cursor: pointer" onClick="{{draw}}">SORTEAR DESEMPATE</button>
+    </sc-if>
+    <sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; gap: 12px">
+        <a href="Host.dc.html" style="height: 60px; padding: 0 28px; border-radius: 20px; background: #ffffff; color: #204a77; font-weight: 700; font-size: 16px; display: flex; align-items: center; text-decoration: none">Confirmar e seguir para o próximo prêmio</a>
+        <button style="height: 60px; padding: 0 22px; border-radius: 20px; border: 2px solid #ffffff; background: transparent; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px; cursor: pointer" onClick="{{reset}}">ver de novo</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { done: false }; }
+  renderVals() {
+    var self = this; var done = this.state.done;
+    var base = [
+      { i: 'MR', n: 'Marina Rocha', line: 'linha 2', c: '#779ccf', win: true },
+      { i: 'PL', n: 'Pedro Lima', line: 'linha 4', c: '#914ec4', win: false }
+    ];
+    var players = base.map(function (p) {
+      var w = done && p.win, l = done && !p.win;
+      return { i: p.i, n: p.n, line: p.line, c: p.c,
+        bg: w ? '#ffffff' : 'rgba(255,255,255,.10)', fg: w ? '#204a77' : '#ffffff',
+        border: w ? '4px solid #4ec45f' : '2px solid rgba(255,255,255,.25)', op: l ? '0.55' : '1',
+        tag: w ? 'VENCEU O DESEMPATE' : (l ? 'fica para o próximo' : 'bingo válido'),
+        tagBg: w ? '#4ec45f' : 'rgba(255,255,255,.15)' };
+    });
+    return { players: players, pending: !done, done: done,
+      draw: function () { self.setState({ done: true }); },
+      reset: function () { self.setState({ done: false }); } };
+  }
+}
+</script>
+</body>
+</html>

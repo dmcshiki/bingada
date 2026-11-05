@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – lobby</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; display: flex; flex-direction: column; position: relative; overflow: hidden">
+  <div style="position: absolute; left: -200px; top: -260px; width: 600px; height: 600px; background: #d3dbe6; border-radius: 150px; transform: rotate(-8deg)" aria-hidden="true"></div>
+  <header style="position: relative; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 26px; color: #204a77">tokingo</span>
+    <div style="display: flex; align-items: center; gap: 16px">
+      <button aria-label="Como jogar" style="width: 44px; height: 44px; border-radius: 14px; border: 0; background: #ffffff; color: #204a77; font-family: 'Days One', sans-serif; font-size: 18px">?</button>
+      <div style="display: flex; align-items: center; gap: 12px; background: #ffffff; padding: 6px 14px 6px 6px; border-radius: 24px">
+        <span style="width: 36px; height: 36px; border-radius: 11px; transform: rotate(-8deg); background: #204a77; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">DM</span>
+        <span style="font-size: 14px; font-weight: 500">Daniel · sair</span>
+      </div>
+    </div>
+  </header>
+  <main style="position: relative; flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; padding: 40px 120px 80px; align-items: center">
+    <section style="background: #ffffff; border-radius: 32px; padding: 44px; display: flex; flex-direction: column; gap: 24px; height: 520px; box-sizing: border-box">
+      <h1 style="margin: 0; font-weight: 300; font-size: 36px">entrar numa <b style="font-weight: 700">sala</b></h1>
+      <label style="display: flex; flex-direction: column; gap: 12px; font-size: 14px; font-weight: 700">Código da sala
+        <span style="display: flex; gap: 12px">
+          <input aria-label="1º caractere" value="K" style="width: 76px; height: 92px; border-radius: 20px; border: 3px solid #779ccf; text-align: center; font-family: 'Days One', sans-serif; font-size: 40px; color: #204a77">
+          <input aria-label="2º caractere" value="7" style="width: 76px; height: 92px; border-radius: 20px; border: 3px solid #779ccf; text-align: center; font-family: 'Days One', sans-serif; font-size: 40px; color: #204a77">
+          <input aria-label="3º caractere" value="Q" style="width: 76px; height: 92px; border-radius: 20px; border: 3px solid #779ccf; text-align: center; font-family: 'Days One', sans-serif; font-size: 40px; color: #204a77">
+          <input aria-label="4º caractere" value="" style="width: 76px; height: 92px; border-radius: 20px; border: 3px solid #e6e9e9; text-align: center; font-family: 'Days One', sans-serif; font-size: 40px; color: #204a77">
+        </span>
+      </label>
+      <span style="font-size: 14px">Ou abra o link / QR code que o host compartilhou.</span>
+      <div style="flex: 1"></div>
+      <button style="height: 64px; border-radius: 20px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 18px">Entrar na sala</button>
+    </section>
+    <section style="background: #204a77; color: #ffffff; border-radius: 32px; padding: 44px; display: flex; flex-direction: column; gap: 20px; height: 520px; box-sizing: border-box; position: relative; overflow: hidden">
+      <div style="position: absolute; right: -80px; bottom: -100px; width: 280px; height: 280px; border-radius: 70px; background: #1868a1; transform: rotate(-8deg)" aria-hidden="true"></div>
+      <h1 style="position: relative; margin: 0; font-weight: 300; font-size: 36px">criar uma <b style="font-weight: 700">sala</b></h1>
+      <p style="position: relative; margin: 0; font-size: 16px; line-height: 1.5">Você vira o host: define quem pode entrar, monta a cartela, escolhe os prêmios e canta as bolas. E ainda pode jogar.</p>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+        <span>1 · Acesso</span><span>2 · Cartela</span><span>3 · Prêmios</span><span>4 · Regras e revisão</span>
+      </div>
+      <div style="flex: 1"></div>
+      <button style="position: relative; height: 64px; border-radius: 20px; border: 0; background: #ffffff; color: #204a77; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 18px">Criar sala</button>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

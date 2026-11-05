@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – entrar e como jogar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; display: grid; grid-template-columns: 620px minmax(0, 1fr); position: relative; overflow: hidden">
+  <section style="position: relative; background: #779ccf; color: #ffffff; padding: 64px; display: flex; flex-direction: column; gap: 28px; overflow: hidden">
+    <div style="position: absolute; right: -220px; bottom: -200px; width: 520px; height: 520px; border-radius: 130px; background: #4f86c6; transform: rotate(-8deg)" aria-hidden="true"></div>
+    <span style="position: relative; font-family: 'Days One', sans-serif; font-size: 44px">tokingo</span>
+    <h1 style="position: relative; margin: 0; font-weight: 300; font-size: 40px; line-height: 1.15">bingo de verdade,<br><b style="font-weight: 700">na tela de todo mundo.</b></h1>
+    <div style="position: relative; background: #ffffff; color: #424041; border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 16px; margin-top: 12px">
+      <span style="font-size: 14px; font-weight: 500">Entrando na sala <b>K7QP</b> · Happy hour de sexta</span>
+      <span style="font-size: 13px; padding: 10px 12px; border-radius: 12px; background: #e6e9e9">Esta sala aceita só contas <b>@suaempresa.com.br</b></span>
+      <button style="height: 60px; border-radius: 18px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 12px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>
+        Entrar com Google
+      </button>
+      <span style="font-size: 12px">Usamos só seu nome, foto e e-mail para criar sua cartela. Projeto open source.</span>
+    </div>
+  </section>
+
+  <section style="padding: 56px 64px; display: flex; flex-direction: column; gap: 22px">
+    <h2 style="margin: 0; font-weight: 300; font-size: 34px">como <b style="font-weight: 700">jogar</b></h2>
+    <div style="display: flex; gap: 8px" role="tablist" aria-label="Passos">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <button role="tab" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: {{t.bg}}; color: {{t.fg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; cursor: pointer" onClick="{{t.go}}">{{t.n}}</button>
+      </sc-for>
+    </div>
+    <div style="background: #ffffff; border-radius: 28px; padding: 32px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; align-items: center; min-height: 300px">
+      <div style="width: 200px; height: 200px; border-radius: 52px; transform: rotate(-8deg); background: {{step.color}}; display: flex; align-items: center; justify-content: center; color: #ffffff; font-family: 'Days One', sans-serif; font-size: 72px">{{step.n}}</div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <span style="font-family: 'Days One', sans-serif; font-size: 28px; color: #204a77">{{step.title}}</span>
+        <span style="font-size: 18px; line-height: 1.5">{{step.text}}</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 700">Modalidades que podem valer</span>
+      <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px">
+        <span style="padding: 8px 12px; border-radius: 14px; background: #ffffff"><b>Horizontal</b>: uma linha</span>
+        <span style="padding: 8px 12px; border-radius: 14px; background: #ffffff"><b>Vertical</b>: uma coluna</span>
+        <span style="padding: 8px 12px; border-radius: 14px; background: #ffffff"><b>Diagonal</b></span>
+        <span style="padding: 8px 12px; border-radius: 14px; background: #ffffff"><b>Cartela cheia</b>: tudo</span>
+        <span style="padding: 8px 12px; border-radius: 14px; background: #ffffff"><b>Azarão</b>: menos números no fim</span>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { i: parseInt(p && p.step, 10) || 0 }; }
+  renderVals() {
+    var self = this;
+    var steps = [
+      { n: '1', title: 'Entre e pegue sua cartela', text: 'Entre com sua conta e o código da sala. Você recebe uma cartela única, que é a mesma em qualquer dispositivo.', color: '#779ccf' },
+      { n: '2', title: 'Fique de olho nas bolas', text: 'O host sorteia e mostra cada bola na tela de transmissão. Elas também aparecem no topo da sua tela.', color: '#09b5f0' },
+      { n: '3', title: 'Carimbe você mesmo', text: 'Saiu um número da sua cartela? Toque nele. O app não marca nada sozinho e não avisa: a atenção é sua.', color: '#4ec45f' },
+      { n: '4', title: 'Fechou? BINGO!', text: 'Completou a modalidade que está valendo? Aperte BINGO. O host confere na hora. Se você marcou um número que não saiu, comeu bola!', color: '#914ec4' }
+    ];
+    var i = this.state.i;
+    var tabs = steps.map(function (s, k) { return { n: 'Passo ' + s.n, bg: k === i ? '#204a77' : '#ffffff', fg: k === i ? '#ffffff' : '#424041', go: function () { self.setState({ i: k }); } }; });
+    return { tabs: tabs, step: steps[i] };
+  }
+}
+</script>
+</body>
+</html>

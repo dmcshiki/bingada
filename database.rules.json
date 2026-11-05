@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "presence": {
+      "$gameId": {
+        ".read": true,
+        "host": {
+          ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && newData.child('uid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['online', 'lastSeen']) && newData.child('online').isBoolean()"
+        }
+      }
+    },
+    "$other": { ".read": false, ".write": false }
+  }
+}

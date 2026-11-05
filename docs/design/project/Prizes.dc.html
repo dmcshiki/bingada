@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Tokingo – criar sala: prêmios</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Days+One&amp;family=Montserrat:wght@300;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#204a77}a:hover{color:#1868a1}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #e6e9e9; font-family: Montserrat, sans-serif; color: #424041; display: flex; flex-direction: column; position: relative; overflow: hidden">
+  <div style="position: absolute; right: -180px; bottom: -240px; width: 520px; height: 520px; background: #779ccf; border-radius: 130px; transform: rotate(-8deg)" aria-hidden="true"></div>
+  <header style="position: relative; height: 72px; display: flex; align-items: center; gap: 32px; padding: 0 40px">
+    <span style="font-family: 'Days One', sans-serif; font-size: 26px; color: #204a77">tokingo</span>
+    <nav style="display: flex; gap: 8px; font-size: 14px; font-weight: 700" aria-label="Etapas">
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">1 Acesso ✓</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">2 Cartela ✓</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #204a77; color: #ffffff">3 Prêmios</span>
+      <span style="padding: 8px 14px; border-radius: 16px; background: #ffffff">4 Regras</span>
+    </nav>
+  </header>
+
+  <main style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 32px; padding: 16px 40px 32px">
+    <section style="background: #ffffff; border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+      <h1 style="margin: 0; font-weight: 300; font-size: 30px">defina os <b style="font-weight: 700">prêmios</b></h1>
+      <p style="margin: 0; font-size: 14px">Valem em ordem, e as bolas sorteadas continuam valendo entre um prêmio e outro. O jogo termina quando o último prêmio desta lista sai.</p>
+      <sc-for list="{{prizes}}" as="z" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr) 220px 110px 44px; gap: 12px; align-items: center; padding: 12px; border-radius: 18px; background: #f4f6f6">
+          <span style="width: 40px; height: 40px; border-radius: 12px; transform: rotate(-8deg); background: #204a77; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Days One', sans-serif">{{z.o}}</span>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700">Prêmio
+            <input value="{{z.label}}" style="height: 40px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 12px; font-family: Montserrat, sans-serif; font-size: 15px">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700">Modalidade
+            <select style="height: 44px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 10px; font-family: Montserrat, sans-serif; font-size: 15px; background: #ffffff">
+              <option>{{z.kind}}</option>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700">Vencedores
+            <input value="1" style="height: 40px; border-radius: 12px; border: 2px solid #e6e9e9; padding: 0 12px; font-family: Montserrat, sans-serif; font-size: 15px">
+          </label>
+          <button aria-label="Remover prêmio" style="width: 44px; height: 44px; border-radius: 12px; border: 0; background: #e6e9e9; color: #424041; font-size: 18px">×</button>
+        </div>
+      </sc-for>
+      <div style="border-radius: 18px; border: 2px dashed #c679cc; padding: 14px 16px; display: flex; align-items: center; gap: 14px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: .05em">FIM DE JOGO</span>
+        <span style="flex: 1; font-size: 15px"><b>Prêmio azarão</b> · quem tiver menos números sorteados quando o jogo acabar</span>
+        <label style="font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px"><input type="checkbox" checked="checked" style="width: 22px; height: 22px"> ativo</label>
+      </div>
+      <button style="align-self: flex-start; height: 48px; padding: 0 18px; border-radius: 16px; border: 2px dashed #779ccf; background: #ffffff; color: #204a77; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">+ Adicionar prêmio</button>
+      <div style="flex: 1"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 12px">
+        <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 2px solid #424041; background: #ffffff; color: #424041; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">Voltar</button>
+        <button style="height: 52px; padding: 0 26px; border-radius: 16px; border: 0; background: #204a77; color: #ffffff; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 15px">Próximo: regras</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #ffffff; border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-weight: 300; font-size: 22px">quem já ganhou <b style="font-weight: 700">pode ganhar de novo?</b></h2>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 700">Máximo de prêmios por pessoa</span>
+          <div style="display: flex; gap: 6px">
+            <sc-for list="{{limits}}" as="l" hint-placeholder-count="4">
+              <button style="flex: 1; height: 44px; border-radius: 14px; border: {{l.border}}; background: {{l.bg}}; color: {{l.fg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; cursor: pointer" onClick="{{l.pick}}" aria-pressed="{{l.on}}">{{l.n}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 700">Quem ganhou… pode concorrer a:</span>
+          <div style="display: grid; grid-template-columns: 112px repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center; font-size: 12px; font-weight: 700">
+            <span></span><span style="text-align: center">2 Vale-café</span><span style="text-align: center">3 Fone</span><span style="text-align: center">Azarão</span>
+          </div>
+          <sc-for list="{{matrix}}" as="row" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: 112px repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center">
+              <span style="font-size: 13px; font-weight: 700">{{row.n}}</span>
+              <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="3">
+                <button style="height: 40px; border-radius: 12px; border: 0; background: {{c.bg}}; color: {{c.fg}}; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 13px; cursor: {{c.cur}}" onClick="{{c.toggle}}" aria-label="{{c.aria}}">{{c.t}}</button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; line-height: 1.45">{{limitHelp}} Quem não pode mais ganhar continua jogando, mas o BINGO dele fica desativado para aquele prêmio, e ele é ignorado no cálculo do azarão.</span>
+      </div>
+      <div style="background: #ffffff; border-radius: 28px; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 12px; font-weight: 700">MODALIDADES</span>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="9">
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center">
+              <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; width: 46px">
+                <sc-for list="{{k.cells}}" as="c" hint-placeholder-count="25">
+                  <span style="aspect-ratio: 1; border-radius: 2px; background: {{c}}"></span>
+                </sc-for>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; text-align: center">{{k.n}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { lim: 0, allow: { '0-0': false, '0-1': false, '0-2': false, '1-1': false, '1-2': false, '2-2': false } }; }
+  renderVals() {
+    var self = this;
+    var L = ['1 prêmio', '2 prêmios', '3 prêmios', 'Sem limite'];
+    var lim = this.state.lim;
+    var limits = L.map(function (n, i) { var on = i === lim; return { n: n, on: on ? 'true' : 'false', bg: on ? '#204a77' : '#ffffff', fg: on ? '#ffffff' : '#424041', border: on ? '0' : '2px solid #e6e9e9', pick: function () {
+      var al = {}; Object.keys(self.state.allow).forEach(function (k) { al[k] = i > 0; }); self.setState({ lim: i, allow: al }); } }; });
+    var rowsN = ['1 Caneca', '2 Vale-café', '3 Fone'];
+    var colsN = ['Vale-café', 'Fone', 'Azarão'];
+    var matrix = rowsN.map(function (rn, r) {
+      return { n: rn, cells: colsN.map(function (cn, c) {
+        var k = r + '-' + c; var na = c < r; var on = !!self.state.allow[k];
+        return { t: na ? '—' : (on ? 'Pode' : 'Não'), bg: na ? '#f4f6f6' : (on ? '#4ec45f' : '#e6e9e9'), fg: na ? '#9a9899' : (on ? '#123b19' : '#424041'), cur: na ? 'default' : 'pointer',
+          aria: rn + ' pode concorrer a ' + cn + ': ' + (na ? 'não se aplica' : (on ? 'sim' : 'não')),
+          toggle: function () { if (na) return; var al = Object.assign({}, self.state.allow); al[k] = !al[k]; self.setState({ allow: al }); } };
+      }) };
+    });
+    var limitHelp = lim === 0 ? 'Com 1 prêmio por pessoa, quem ganha sai da disputa dos próximos.' : 'Ajuste caso a caso na tabela.';
+    function mask(f) { var a = []; for (var r = 0; r < 5; r++) for (var c = 0; c < 5; c++) a.push(f(r, c) ? '#779ccf' : '#e6e9e9'); return a; }
+    var kinds = [
+      { n: 'Horizontal', cells: mask(function (r) { return r === 1; }) },
+      { n: 'Vertical', cells: mask(function (r, c) { return c === 3; }) },
+      { n: 'Diagonal', cells: mask(function (r, c) { return r === c; }) },
+      { n: 'Quatro cantos', cells: mask(function (r, c) { return (r === 0 || r === 4) && (c === 0 || c === 4); }) },
+      { n: 'X', cells: mask(function (r, c) { return r === c || r + c === 4; }) },
+      { n: 'Moldura', cells: mask(function (r, c) { return r === 0 || r === 4 || c === 0 || c === 4; }) },
+      { n: 'Cartela cheia', cells: mask(function () { return true; }) },
+      { n: 'Azarão', cells: mask(function (r, c) { return r === 0 && c === 3; }) },
+      { n: 'Customizado', cells: mask(function (r, c) { return (r === 2) || (c === 2); }) }
+    ];
+    return {
+      limits: limits, matrix: matrix, limitHelp: limitHelp,
+      kinds: kinds,
+      prizes: [
+        { o: '1', label: 'Caneca', kind: 'Horizontal' },
+        { o: '2', label: 'Vale-café', kind: 'Vertical' },
+        { o: '3', label: 'Fone bluetooth', kind: 'Cartela cheia' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

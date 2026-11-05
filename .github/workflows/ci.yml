@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Only one Pages deploy at a time; a newer push replaces a queued one.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
+      - name: Lint de marca (R12) – nenhum nome/domínio de terceiros
+        run: |
+          if [ -f .brand-denylist ] && grep -rniIf .brand-denylist lib web assets 2>/dev/null; then
+            echo "Termo de marca proibido encontrado (R12)"; exit 1
+          fi
+
+  # GitHub Pages: https://<usuario>.github.io/<repo>/
+  # Repository secret FIREBASE_CONFIG_JSON = full content of config/firebase.json.
+  build-pages:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+      - run: flutter pub get && dart run build_runner build --delete-conflicting-outputs
+      - name: Firebase config (secret -> file, never committed)
+        env:
+          FIREBASE_CONFIG_JSON: ${{ secrets.FIREBASE_CONFIG_JSON }}
+        run: |
+          test -n "$FIREBASE_CONFIG_JSON" || { echo "Secret FIREBASE_CONFIG_JSON ausente"; exit 1; }
+          printf '%s' "$FIREBASE_CONFIG_JSON" > config/firebase.json
+      - name: Build web
+        run: >
+          flutter build web --release
+          --base-href "/${{ github.event.repository.name }}/"
+          --dart-define-from-file=config/firebase.json
+          --dart-define=GIT_SHA=${{ github.sha }}
+          --dart-define=TOKINGO_REPO_URL=${{ github.server_url }}/${{ github.repository }}
+      - name: SPA fallback (links like /s/ABCD open directly)
+        run: |
+          cp build/web/index.html build/web/404.html
+          touch build/web/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy-pages:
+    needs: build-pages
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
