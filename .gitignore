@@ -29,3 +29,6 @@ config/*.json
 *.mobileprovision
 android/key.properties
 .env.*
+
+# npm dependencies (test/rules emulator tests)
+node_modules/
