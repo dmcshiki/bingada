@@ -17,6 +17,7 @@ import 'package:tokingo/features/game/domain/services/penalty_evaluator.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
 import 'package:tokingo/features/game/presentation/common/game_format.dart';
 import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
+import 'package:tokingo/features/game/presentation/player/choose_prize_overlay.dart';
 import 'package:tokingo/features/game/presentation/player/player_game_controller.dart';
 import 'package:tokingo/features/game/presentation/player/player_overlays.dart';
 

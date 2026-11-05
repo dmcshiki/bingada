@@ -314,7 +314,7 @@ class _GoogleButton extends StatelessWidget {
 String _signInErrorMessage(Object e) {
   final text = e.toString();
   final code =
-      RegExp(r'auth/([a-z-]+)').firstMatch(text)?.group(1) ??
+      RegExp('auth/([a-z-]+)').firstMatch(text)?.group(1) ??
       RegExp(r'\[firebase_auth/([a-z-]+)\]').firstMatch(text)?.group(1);
   return switch (code) {
     'popup-closed-by-user' || 'cancelled-popup-request' => 'Login cancelado.',
