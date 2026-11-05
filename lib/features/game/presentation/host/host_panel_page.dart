@@ -88,8 +88,6 @@ class _HostPanelPageState extends State<HostPanelPage> {
         await _c.reject(claim);
       case VerifyConfirm(:final claim):
         await _c.confirmSingle(claim);
-      case VerifyConfirmAll(:final tied):
-        await _c.confirmAll(tied);
       case VerifyGoTiebreak(:final tied):
         await showDialog<void>(
           context: context,

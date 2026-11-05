@@ -20,8 +20,8 @@ class ReviewStep extends StatelessWidget {
   final VoidCallback onSubmit;
 
   static const List<(TieBreakRule, String)> _tieItems = [
-    (TieBreakRule.draw, 'Sorteio de desempate'),
-    (TieBreakRule.allWin, 'Todos ganham'),
+    (TieBreakRule.draw, 'Sorteio entre os empatados'),
+    (TieBreakRule.fewestPrizes, 'Quem tem menos prêmios leva'),
   ];
 
   static const _penaltyOptions = [1, 2, 3, 5];
@@ -88,7 +88,9 @@ class ReviewStep extends StatelessWidget {
           ),
           _RuleRow(
             title: 'Empate no mesmo prêmio',
-            desc: 'Dois ou mais gritos válidos na mesma bola.',
+            desc:
+                'Dois ou mais gritos válidos na mesma bola. Só uma pessoa leva; '
+                'em "menos prêmios", se ainda empatar, há sorteio.',
             control: DraftDropdown<TieBreakRule>(
               semanticsLabel: 'Empate no mesmo prêmio',
               value: c.tieBreak,
@@ -99,7 +101,9 @@ class ReviewStep extends StatelessWidget {
           if (c.underdog)
             _RuleRow(
               title: 'Desempate do azarão',
-              desc: 'Mais de um jogador com o mesmo mínimo.',
+              desc:
+                  'Os últimos que sobraram saíram na mesma bola. Só uma pessoa '
+                  'leva; em "menos prêmios", se ainda empatar, há sorteio.',
               control: DraftDropdown<TieBreakRule>(
                 semanticsLabel: 'Desempate do azarão',
                 value: c.underdogTie,

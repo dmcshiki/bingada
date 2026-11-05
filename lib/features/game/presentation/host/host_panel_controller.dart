@@ -243,41 +243,6 @@ class HostPanelController extends GameWatchController {
     return await _run(() => _award(claim, r, claim.prizeId));
   }
 
-  /// tieBreak == allWin: everyone tied wins together. Players already holding
-  /// a prize are asked to keep it or swap.
-  Future<bool> confirmAll(List<Claim> tied) async {
-    if (game == null) return false;
-    return await _run(() async {
-      final g = await _fresh();
-      final free = <Claim>[];
-      for (final c in tied) {
-        final r = results[c.id];
-        if (_needsChoice(g, c.uid, c.prizeId)) {
-          await _repoUpdate(
-            g,
-            _asValid(c, r, c.prizeId, ClaimStatus.awaitingChoice),
-          );
-        } else {
-          await _repoUpdate(
-            g,
-            _asValid(c, r, c.prizeId, ClaimStatus.confirmed),
-          );
-          free.add(c);
-        }
-      }
-      if (free.isEmpty) return;
-      await _confirmPrize(g, [
-        for (final c in free)
-          Winner(
-            prizeId: c.prizeId,
-            uid: c.uid,
-            drawIndex: c.drawIndex,
-            tieBreak: true,
-          ),
-      ]);
-    });
-  }
-
   /// 12b: deterministic draw among the tied players.
   Future<UserId?> drawTie(List<Claim> tied) async {
     final g = game;
@@ -297,21 +262,32 @@ class HostPanelController extends GameWatchController {
     if (game == null) return false;
     return await _run(() async {
       final g = await _fresh();
-      for (final c in tied) {
-        if (c.uid == winner) continue;
-        final r = results[c.id];
-        await _repoUpdate(
-          g,
-          c.copyWith(
-            status: ClaimStatus.tied,
-            verdict: r?.verdict ?? ClaimVerdict.valid,
-            matched: r?.matched ?? c.matched,
-          ),
-        );
-      }
       final win = tied.firstWhere((c) => c.uid == winner);
+      await _parkOthers(g, win);
       await _award(win, results[win.id], win.prizeId, tieBreak: true);
     });
+  }
+
+  /// Every other claim still pending in the same tie as [win] becomes
+  /// `tied` (in line in case the winner gives the prize up).
+  Future<void> _parkOthers(Game g, Claim win) async {
+    for (final c in claims) {
+      if (c.id == win.id ||
+          c.prizeId != win.prizeId ||
+          c.drawIndex != win.drawIndex ||
+          c.status != ClaimStatus.pending) {
+        continue;
+      }
+      final r = results[c.id];
+      await _repoUpdate(
+        g,
+        c.copyWith(
+          status: ClaimStatus.tied,
+          verdict: r?.verdict ?? ClaimVerdict.valid,
+          matched: r?.matched ?? c.matched,
+        ),
+      );
+    }
   }
 
   // ------------------------------------------------------- keep or swap
@@ -559,10 +535,23 @@ class HostPanelController extends GameWatchController {
       for (final c in claims)
         if (ids.contains(c.id)) withResult(c),
     ];
+    final live = [
+      for (final c in now)
+        if (c.status == ClaimStatus.pending) c,
+    ];
+    final g = game;
+    final keep = g == null
+        ? {for (final c in live) c.uid}
+        : tieContenders(
+            [for (final c in live) c.uid],
+            g.winners,
+            g.settings.tieBreak,
+          ).toSet();
     return TieState(
-      live: [
-        for (final c in now)
-          if (c.status == ClaimStatus.pending) c,
+      live: live,
+      contenders: [
+        for (final c in live)
+          if (keep.contains(c.uid)) c,
       ],
       skipped: [
         for (final c in now)
@@ -586,8 +575,10 @@ class HostPanelController extends GameWatchController {
   }
 
   /// Only one player left after the others skipped: they take the prize.
-  Future<bool> awardSoleTied(Claim c) =>
-      _run(() => _award(c, results[c.id], c.prizeId, tieBreak: true));
+  Future<bool> awardSoleTied(Claim c) => _run(() async {
+    await _parkOthers(await _fresh(), c);
+    await _award(c, results[c.id], c.prizeId, tieBreak: true);
+  });
 
   /// Everyone in the tie skipped: the prize follows the room rule.
   Future<bool> releaseSkippedTie(PrizeId prize) =>
@@ -638,12 +629,17 @@ class HostPanelController extends GameWatchController {
 final class TieState {
   const TieState({
     required this.live,
+    required this.contenders,
     required this.skipped,
     required this.waiting,
   });
 
   /// Still in the tie (pending claims).
   final List<Claim> live;
+
+  /// Of [live], who actually competes: everyone on a plain draw, only
+  /// those with the fewest prizes on [TieBreakRule.fewestPrizes].
+  final List<Claim> contenders;
 
   /// Were at the limit and chose to skip.
   final List<Claim> skipped;

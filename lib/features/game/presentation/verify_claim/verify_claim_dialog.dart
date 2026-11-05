@@ -31,11 +31,6 @@ final class VerifyConfirm extends VerifyAction {
   final Claim claim;
 }
 
-final class VerifyConfirmAll extends VerifyAction {
-  const VerifyConfirmAll(this.tied);
-  final List<Claim> tied;
-}
-
 final class VerifyGoTiebreak extends VerifyAction {
   const VerifyGoTiebreak(this.tied);
   final List<Claim> tied;
@@ -445,7 +440,7 @@ class _VerifyInfo extends StatelessWidget {
       for (final o in tied)
         if (o.id != claim.id) o,
     ];
-    final allWin = game.settings.tieBreak == TieBreakRule.allWin;
+    final fewest = game.settings.tieBreak == TieBreakRule.fewestPrizes;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -570,9 +565,8 @@ class _VerifyInfo extends StatelessWidget {
             others: others,
             players: players,
             template: game,
-            onGo: () => Navigator.of(context)
-                .pop(allWin ? VerifyConfirmAll(tied) : VerifyGoTiebreak(tied)),
-            allWin: allWin,
+            onGo: () => Navigator.of(context).pop(VerifyGoTiebreak(tied)),
+            fewest: fewest,
           ),
       ],
     );
@@ -599,14 +593,14 @@ class _TieBlock extends StatelessWidget {
     required this.players,
     required this.template,
     required this.onGo,
-    required this.allWin,
+    required this.fewest,
   });
 
   final List<Claim> others;
   final List<Player> players;
   final Game template;
   final VoidCallback onGo;
-  final bool allWin;
+  final bool fewest;
 
   @override
   Widget build(BuildContext context) {
@@ -649,19 +643,13 @@ class _TieBlock extends StatelessWidget {
                 TextSpan(
                   text:
                       ' também ${others.length > 1 ? 'gritaram' : 'gritou'} um BINGO válido ($how) na mesma bola$ball. '
-                      '${allWin ? 'Pela regra da sala, todos ganham juntos.' : 'Pela regra da sala, o prêmio vai para sorteio.'}',
+                      '${fewest ? 'Pela regra da sala, leva quem tem menos prêmios; se ainda empatar, há sorteio.' : 'Pela regra da sala, o prêmio vai para sorteio.'}',
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          AppButton(
-            label: allWin
-                ? 'Confirmar todos os vencedores'
-                : 'Ir para o sorteio de desempate',
-            height: 60,
-            onPressed: onGo,
-          ),
+          AppButton(label: 'Resolver o desempate', height: 60, onPressed: onGo),
         ],
       ),
     );

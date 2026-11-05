@@ -34,7 +34,7 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
     );
   }
 
-  List<Claim> get _live => widget.controller.tieState(widget.tied).live;
+  List<Claim> get _live => widget.controller.tieState(widget.tied).contenders;
 
   Future<void> _draw() async {
     final w = await widget.controller.drawTie(_live);
@@ -213,10 +213,11 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                                     if (ok) nav.pop();
                                   },
                           )
-                        else if (!done && st.live.length == 1)
+                        else if (!done && st.contenders.length == 1)
                           AppButton(
                             label:
-                                '${playerName(c.players, st.live.single.uid)} '
+                                '${playerName(c.players, st.contenders.single.uid)} '
+                                '${st.contenders.length < st.live.length ? '(menos prêmios) ' : ''}'
                                 'fica com o prêmio',
                             kind: AppButtonKind.light,
                             height: 60,
@@ -226,7 +227,7 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                                 : () async {
                                     final nav = Navigator.of(context);
                                     final ok = await c.awardSoleTied(
-                                      st.live.single,
+                                      st.contenders.single,
                                     );
                                     if (ok) nav.pop();
                                   },

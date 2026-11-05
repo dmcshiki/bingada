@@ -335,15 +335,22 @@ List<Winner> underdogWinners({
       gameOver: gameOver,
     );
     if (!r.decided || r.survivors.isEmpty) continue;
-    final picked = r.tied && game.settings.underdogTie == TieBreakRule.draw
-        ? [
+    // Always one winner: fewest prizes first (when the rule says so), then
+    // a deterministic draw.
+    final pool = tieContenders(
+      r.survivors,
+      game.winners,
+      game.settings.underdogTie,
+    );
+    final picked = pool.length == 1
+        ? pool
+        : [
             tieBreaker.pick(
               finalSeedHex: finalSeedHex,
               prizeId: prize.id,
-              tied: r.survivors,
+              tied: pool,
             ),
-          ]
-        : r.survivors;
+          ];
     out.addAll([
       for (final u in picked)
         Winner(
@@ -395,9 +402,10 @@ final class AwardUnderdog {
     final seed = await _secrets.loadDrawSeed(game.id);
     if (seed == null) return const [];
     final cards = _cards[game.id] ??= await _repo.getCards(game.id);
-    // Real tie (the last ones fell on the same ball) with "draw": the host
-    // draws it on screen instead of it being picked silently.
-    if (game.settings.underdogTie == TieBreakRule.draw) {
+    // Real tie (the last ones fell on the same ball): the host draws it on
+    // screen instead of it being picked silently. With "fewest prizes" only
+    // those holding the fewest go to the draw (one left wins directly).
+    {
       for (final prize in game.endOfGamePrizes) {
         if (prize.pattern != PatternKind.underdog || game.isWon(prize.id)) {
           continue;
@@ -410,12 +418,19 @@ final class AwardUnderdog {
           policy: game.prizePolicy,
           freeCellIndex: game.template.freeCellIndex,
         );
-        if (r.decided && r.tied) {
+        final pool = r.decided && r.tied
+            ? tieContenders(
+                r.survivors,
+                game.winners,
+                game.settings.underdogTie,
+              )
+            : const <UserId>[];
+        if (pool.length > 1) {
           await _repo.setRaffle(
             game.id,
             Raffle(
               prizeId: prize.id,
-              candidates: r.survivors,
+              candidates: pool,
               kind: RaffleKind.underdogTie,
             ),
           );

@@ -7,7 +7,30 @@ part 'game.freezed.dart';
 
 enum GameStatus { lobby, running, finished, abandoned }
 
-enum TieBreakRule { draw, allWin }
+/// How a tie is settled. There is always exactly one winner.
+enum TieBreakRule {
+  /// Draw among everyone tied.
+  draw,
+
+  /// Whoever holds fewer prizes takes it; a draw if still tied.
+  fewestPrizes,
+}
+
+/// Of [tied], those holding the fewest prizes in [winners] (all of them
+/// when [rule] is a plain draw).
+List<UserId> tieContenders(
+  List<UserId> tied,
+  List<Winner> winners,
+  TieBreakRule rule,
+) {
+  if (rule == TieBreakRule.draw || tied.length < 2) return tied;
+  int count(UserId u) => winners.where((w) => w.uid == u).length;
+  final least = tied.map(count).reduce((a, b) => a < b ? a : b);
+  return [
+    for (final u in tied)
+      if (count(u) == least) u,
+  ];
+}
 
 /// What happens to a prize a player gives up because of the room limit.
 enum OverLimitRule {
