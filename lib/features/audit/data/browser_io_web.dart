@@ -25,8 +25,23 @@ bool downloadTextFile(
   return true;
 }
 
-/// Opens [url] in a new tab (no opener).
+/// Opens an absolute http(s) [url] in a new tab, as a real external
+/// navigation: a temporary `<a target="_blank" rel="noopener noreferrer">`
+/// clicked inside the user's tap. Never touches the app router, so it can't
+/// fall into the login redirect. Relative/odd URLs are refused.
 bool openExternal(String url) {
-  web.window.open(url, '_blank', 'noopener,noreferrer');
+  final uri = Uri.tryParse(url);
+  if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+    return false;
+  }
+  final a = web.HTMLAnchorElement()
+    ..href = uri.toString()
+    ..target = '_blank'
+    ..rel = 'noopener noreferrer'
+    ..style.display = 'none';
+  web.document.body?.append(a);
+  a
+    ..click()
+    ..remove();
   return true;
 }

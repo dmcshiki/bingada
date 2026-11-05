@@ -11,51 +11,6 @@ import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
 import 'package:tokingo/features/game/presentation/player/player_game_controller.dart';
 import 'package:tokingo/features/help/presentation/how_to_play.dart';
 
-/// "Tem certeza? Se errar, todo mundo vai saber" (§5).
-class ConfirmBingoDialog extends StatelessWidget {
-  const ConfirmBingoDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: Colors.transparent,
-    child: DialogCard(
-      semanticLabel: 'Confirmar BINGO',
-      maxWidth: 520,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('BINGO?', style: AppText.display(40, color: AppColors.navy)),
-          const SizedBox(height: 12),
-          Text(
-            'Tem certeza? Se errar, todo mundo vai saber.',
-            textAlign: TextAlign.center,
-            style: AppText.body(18, height: 1.5),
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: [
-              AppButton(
-                label: 'Voltar à cartela',
-                kind: AppButtonKind.outline,
-                height: 56,
-                onPressed: () => Navigator.of(context).pop(false),
-              ),
-              AppButton(
-                label: 'Gritar BINGO!',
-                height: 56,
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 /// 10 / 10b–d: result of the player's own claim.
 class ClaimResultOverlay extends StatelessWidget {
   const ClaimResultOverlay({
@@ -106,7 +61,7 @@ class ClaimResultOverlay extends StatelessWidget {
         const Color(0xFF123B19),
         const Color(0xFF2E7D3A),
         'VOCÊ GANHOU!',
-        '$how, na ${ballOrdinal(claim?.drawIndex ?? 0)}. Prêmio: ${prize?.label ?? ''}. '
+        '${prize == null ? how : modalityName(prize)}, na ${ballOrdinal(claim?.drawIndex ?? 0)}. Prêmio: ${prize?.label ?? ''}. '
             'O jogo segue valendo o próximo prêmio.',
         'Continuar jogando',
       ),
@@ -260,7 +215,7 @@ class PrizeDeliveredOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '$who $verb: ${delivered.prize.label}',
+              '$who $verb:\n${delivered.prize.label}',
               textAlign: TextAlign.center,
               style: AppText.display(34, color: AppColors.navy),
             ),
@@ -328,17 +283,9 @@ class _MatchedLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final matched = [
-      for (final c in claims)
-        if (c.prizeId == delivered.prize.id &&
-            c.status == ClaimStatus.confirmed &&
-            delivered.winners.any((w) => w.uid == c.uid))
-          ...c.matched,
-    ];
+    // Only the prize modality, never the list of every closed pattern.
     return Text(
-      matched.isEmpty
-          ? modalityName(delivered.prize)
-          : describeMatches(matched, game.template, prize: delivered.prize),
+      modalityName(delivered.prize),
       textAlign: TextAlign.center,
       style: AppText.body(16),
     );

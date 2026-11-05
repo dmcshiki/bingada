@@ -71,19 +71,14 @@ void main() {
       expect(find.text('BINGO!'), findsOneWidget);
     });
 
-    testWidgets('BINGO asks for confirmation and shows the waiting overlay', (
+    testWidgets('BINGO sends immediately and shows the waiting overlay', (
       t,
     ) async {
       final repo = registerGameFakes();
       await _pump(t, const PlayerGamePage(code: _code));
 
+      expect(find.text('Se errar, todo mundo vai saber.'), findsOneWidget);
       await t.tap(find.text('BINGO!'));
-      await t.pumpAndSettle();
-      expect(
-        find.text('Tem certeza? Se errar, todo mundo vai saber.'),
-        findsOneWidget,
-      );
-      await t.tap(find.text('Gritar BINGO!'));
       await t.pump();
       await t.pump(const Duration(milliseconds: 50));
       expect(find.text('BINGO enviado!'), findsOneWidget);

@@ -6,6 +6,7 @@ import 'package:tokingo/core/di/injection.dart';
 import 'package:tokingo/core/router/room_gate.dart';
 import 'package:tokingo/core/router/routes.dart';
 import 'package:tokingo/core/types/ids.dart';
+import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/features/audit/presentation/audit_page.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/auth/presentation/login_page.dart';
@@ -40,6 +41,12 @@ final class _AuthRefresh extends ChangeNotifier {
 
 RoomCode _code(GoRouterState s) => RoomCode.parse(s.pathParameters['code']!);
 
+/// Sets the browser tab title: "Tokingo | <where>".
+Widget _titled(String where, Widget page) =>
+    Title(title: 'Tokingo | $where', color: AppColors.navy, child: page);
+
+String _sala(GoRouterState s) => 'sala ${_code(s).value}';
+
 GoRouter buildRouter() {
   final auth = sl<AuthRepository>();
   return GoRouter(
@@ -64,61 +71,84 @@ GoRouter buildRouter() {
         path: AppRoutes.login,
         builder: (_, s) {
           final code = s.uri.queryParameters['code'];
-          return LoginPage(
-            next: s.uri.queryParameters['next'],
-            code: code == null ? null : RoomCode.parse(code),
+          return _titled(
+            'Entrar',
+            LoginPage(
+              next: s.uri.queryParameters['next'],
+              code: code == null ? null : RoomCode.parse(code),
+            ),
           );
         },
       ),
-      GoRoute(path: AppRoutes.lobby, builder: (_, _) => const LobbyPage()),
+      GoRoute(
+        path: AppRoutes.lobby,
+        builder: (_, _) => _titled('Início', const LobbyPage()),
+      ),
       GoRoute(
         path: AppRoutes.create,
         builder: (_, s) {
           final from = s.uri.queryParameters['from'];
-          return CreateRoomPage(fromGameId: from == null ? null : GameId(from));
+          return _titled(
+            'Criar sala',
+            CreateRoomPage(fromGameId: from == null ? null : GameId(from)),
+          );
         },
       ),
       // Sibling routes, not children of /s/:code: a child route also builds
       // its parent, and PlayerRoomGate would redirect the host to /host.
       GoRoute(
         path: '/s/:code',
-        builder: (_, s) => PlayerRoomGate(code: _code(s)),
+        builder: (_, s) =>
+            _titled('Sala ${_code(s).value}', PlayerRoomGate(code: _code(s))),
       ),
       GoRoute(
         path: '/s/:code/play',
-        builder: (_, s) => PlayerGamePage(code: _code(s)),
+        builder: (_, s) =>
+            _titled('Cartela · ${_sala(s)}', PlayerGamePage(code: _code(s))),
       ),
       GoRoute(
         path: '/s/:code/host',
-        builder: (_, s) => HostRoomGate(code: _code(s)),
+        builder: (_, s) =>
+            _titled('Host · ${_sala(s)}', HostRoomGate(code: _code(s))),
       ),
       GoRoute(
         path: '/s/:code/stream',
-        builder: (_, s) => StreamPage(
-          code: _code(s),
-          chroma: s.uri.queryParameters['chroma'] == '1',
-          compact: s.uri.queryParameters['compact'] == '1',
+        builder: (_, s) => _titled(
+          'Telão · ${_sala(s)}',
+          StreamPage(
+            code: _code(s),
+            chroma: s.uri.queryParameters['chroma'] == '1',
+            compact: s.uri.queryParameters['compact'] == '1',
+          ),
         ),
       ),
       GoRoute(
         path: '/s/:code/result',
-        builder: (_, s) => ResultPage(code: _code(s)),
+        builder: (_, s) =>
+            _titled('Resultado · ${_sala(s)}', ResultPage(code: _code(s))),
       ),
       GoRoute(
         path: '/verify/:id',
-        builder: (_, s) => AuditPage(gameId: GameId(s.pathParameters['id']!)),
+        builder: (_, s) => _titled(
+          'Auditoria',
+          AuditPage(gameId: GameId(s.pathParameters['id']!)),
+        ),
       ),
       GoRoute(
         path: '/error/:kind',
         builder: (_, s) {
           final code = s.uri.queryParameters['code'];
-          return ErrorPage(
-            kind: s.pathParameters['kind']!,
-            code: code == null ? null : RoomCode.parse(code),
+          return _titled(
+            'Erro',
+            ErrorPage(
+              kind: s.pathParameters['kind']!,
+              code: code == null ? null : RoomCode.parse(code),
+            ),
           );
         },
       ),
     ],
-    errorBuilder: (_, _) => const ErrorPage(kind: ErrorKinds.invalidCode),
+    errorBuilder: (_, _) =>
+        _titled('Erro', const ErrorPage(kind: ErrorKinds.invalidCode)),
   );
 }

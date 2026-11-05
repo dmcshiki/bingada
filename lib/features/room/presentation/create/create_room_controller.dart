@@ -388,17 +388,17 @@ class CreateRoomController extends ChangeNotifier {
   /// Column titles: sequential prizes 2..n, then "Azarão" if active.
   List<String> get matrixCols => [
     for (var i = 1; i < prizes.length; i++)
-      '${i + 1} ${_short(prizes[i].label)}',
+      '${i + 1} · ${_short(prizes[i].label)}',
     if (underdog) 'Azarão',
   ];
 
   static String _short(String label) {
     final l = label.trim();
     if (l.isEmpty) return 'Prêmio';
-    return l.split(' ').first;
+    return l;
   }
 
-  String rowLabel(int r) => '${r + 1} ${_short(prizes[r].label)}';
+  String rowLabel(int r) => '${r + 1} · ${_short(prizes[r].label)}';
 
   bool isUnderdogCol(int c) => c >= prizes.length - 1;
 

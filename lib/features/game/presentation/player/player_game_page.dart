@@ -7,6 +7,7 @@ import 'package:tokingo/core/router/routes.dart';
 import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/loading.dart';
+import 'package:tokingo/core/ui/sound/bingo_sound.dart';
 import 'package:tokingo/core/ui/widgets.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
@@ -53,6 +54,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
           ? sl<PenaltyEvaluator>()
           : const PenaltyEvaluator(),
     )..addListener(_onChange);
+    _c.onNewPendingClaim = playBingoChime;
     unawaited(_c.start());
   }
 
@@ -87,13 +89,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
     super.dispose();
   }
 
-  Future<void> _confirmAndSend() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmBingoDialog(),
-    );
-    if (ok ?? false) await _c.callBingo();
-  }
+  Future<void> _send() => _c.callBingo();
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -137,7 +133,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
                           game: g,
                           card: card,
                           controller: _c,
-                          onBingo: _confirmAndSend,
+                          onBingo: _send,
                         ),
                 ),
               ],
@@ -159,6 +155,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
                 claims: _c.claims,
                 busy: _c.choosing,
                 onChoose: _c.choose,
+                onRelease: _c.release,
               )
             else if (_c.overlay case final kind?)
               ClaimResultOverlay(
@@ -330,7 +327,11 @@ class _UserChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AvatarToken(initials: user.initials, size: 36),
+          AvatarToken(
+            initials: user.initials,
+            size: 36,
+            photoUrl: user.photoUrl,
+          ),
           if (!compact) ...[
             const SizedBox(width: 12),
             Text(user.displayName.split(' ').first, style: AppText.body(14)),
@@ -357,8 +358,14 @@ class _PlayerBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
-      final wide = box.maxWidth >= 1100;
-      final ball = _CurrentBall(game: game, size: wide ? 260 : 150);
+      // Stacked scrolling layout only on phones; otherwise the wide layout is
+      // drawn at a fixed design size and scaled to fit the viewport.
+      final wide = box.maxWidth >= 700;
+      final ball = _CurrentBall(
+        game: game,
+        size: wide ? 260 : 150,
+        checkingLabel: controller.checkingLabel,
+      );
       final center = _CardAndBingo(
         game: game,
         card: card,
@@ -370,37 +377,15 @@ class _PlayerBody extends StatelessWidget {
       final prizes = PrizeSidebar(game: game, players: controller.players);
       if (wide) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(40, 16, 40, 32),
-          child: Row(
-            children: [
-              SizedBox(width: 380, child: ball),
-              const SizedBox(width: 32),
-              Expanded(
-                child: Center(child: SingleChildScrollView(child: center)),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Center(
+            child: FittedBox(
+              child: SizedBox(
+                width: _designWidth,
+                height: _designHeight,
+                child: _wideRow(ball, center, prizes),
               ),
-              const SizedBox(width: 32),
-              SizedBox(
-                width: 340,
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        prizes,
-                        const SizedBox(height: 16),
-                        _BingoWithError(
-                          controller: controller,
-                          onBingo: onBingo,
-                          height: 60,
-                          fontSize: 28,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       }
@@ -421,22 +406,89 @@ class _PlayerBody extends StatelessWidget {
       );
     },
   );
+
+  static const double _designWidth = 1360;
+  static const double _designHeight = 760;
+
+  Widget _wideRow(Widget ball, Widget center, Widget prizes) => Row(
+    children: [
+      SizedBox(width: 380, child: ball),
+      const SizedBox(width: 32),
+      Expanded(child: Center(child: center)),
+      const SizedBox(width: 32),
+      SizedBox(
+        width: 340,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                prizes,
+                const SizedBox(height: 16),
+                _BingoWithError(
+                  controller: controller,
+                  onBingo: onBingo,
+                  height: 60,
+                  fontSize: 28,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class _CurrentBall extends StatelessWidget {
-  const _CurrentBall({required this.game, required this.size});
+  const _CurrentBall({
+    required this.game,
+    required this.size,
+    this.checkingLabel,
+  });
 
   final Game game;
   final double size;
 
+  /// While a BINGO is checked / a tie decided, replaces the ball.
+  final String? checkingLabel;
+
   @override
   Widget build(BuildContext context) {
     final wide = size > 200;
-    final token = BallToken(
-      template: game.template,
-      ball: game.currentBall,
-      size: size,
-    );
+    final checking = checkingLabel;
+    final token = checking == null
+        ? BallToken(template: game.template, ball: game.currentBall, size: size)
+        : Semantics(
+            liveRegion: true,
+            label: checking,
+            child: ExcludeSemantics(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TokenBox(
+                    size: size,
+                    color: AppColors.graphite,
+                    child: LoadingDots(dotSize: size * .1),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: size + 40,
+                    child: EllipsisText(
+                      checking,
+                      textAlign: TextAlign.center,
+                      style: AppText.body(
+                        wide ? 20 : 15,
+                        weight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
     if (wide) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -591,6 +643,12 @@ class _BingoWithError extends StatelessWidget {
         onPressed: onBingo,
         height: height,
         fontSize: fontSize,
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'Se errar, todo mundo vai saber.',
+        textAlign: TextAlign.center,
+        style: AppText.body(13, color: const Color(0xFF6B6869)),
       ),
       if (controller.sendError case final err?)
         Padding(

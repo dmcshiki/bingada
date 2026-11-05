@@ -3,6 +3,7 @@ import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/loading.dart';
 import 'package:tokingo/core/ui/widgets.dart';
+import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/card_template.dart';
 import 'package:tokingo/features/game/presentation/common/game_format.dart';
 
@@ -29,7 +30,8 @@ class BallToken extends StatelessWidget {
     final token = TokenBox(
       key: ValueKey(id?.value ?? 'none'),
       size: size,
-      color: id == null ? AppColors.light : AppColors.cyan,
+      // Same color as the ball's column (B I N G O headers).
+      color: id == null ? AppColors.light : template.columnColor(id.column),
       radiusFactor: .255,
       shadow: shadow,
       child: id == null
@@ -82,6 +84,7 @@ class _BallLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = template.item(id).label;
     final long = label.length > 3;
+    final fg = AppColors.onColor(template.columnColor(id.column));
     return Padding(
       padding: EdgeInsets.all(size * .06),
       child: Column(
@@ -89,7 +92,7 @@ class _BallLabel extends StatelessWidget {
         children: [
           Text(
             template.header(id.column),
-            style: AppText.display(size * .17, color: AppColors.inkOnLight),
+            style: AppText.display(size * .17, color: fg),
           ),
           FittedBox(
             child: Text(
@@ -98,7 +101,7 @@ class _BallLabel extends StatelessWidget {
               maxLines: 2,
               style: AppText.display(
                 long ? size * .16 : size * .5,
-                color: AppColors.inkOnLight,
+                color: fg,
               ).copyWith(height: 1),
             ),
           ),
@@ -380,6 +383,17 @@ class GameLoadingView extends StatelessWidget {
   );
 }
 
+/// Profile photos by player uid, filled whenever a players list arrives, so
+/// every avatar can show the Google photo without threading it everywhere.
+final Map<UserId, String> playerPhotos = {};
+
+void rememberPlayerPhotos(Iterable<Player> players) {
+  for (final p in players) {
+    final url = p.photoUrl;
+    if (url != null && url.isNotEmpty) playerPhotos[p.uid] = url;
+  }
+}
+
 /// Fixed-size avatar token with initials of [name].
 class NameToken extends StatelessWidget {
   const NameToken({
@@ -403,6 +417,7 @@ class NameToken extends StatelessWidget {
           initials: initialsOf(name),
           size: size,
           color: avatarColor(uid),
+          photoUrl: playerPhotos[uid],
         ),
       ),
     ),

@@ -60,7 +60,12 @@ final class LocalGameRepository implements GameRepository {
   Game _requireGame(GameId id) =>
       _readGame(id) ?? (throw const GameFailure(GameFailureCode.roomNotFound));
 
-  void _writeGame(Game g) => _writeJson(_gameKey(g.id), _map.gameToMap(g));
+  /// Every write is activity (draw, claim, confirmation…), which pushes the
+  /// idle auto-end forward.
+  void _writeGame(Game g, {bool touch = true}) => _writeJson(
+    _gameKey(g.id),
+    _map.gameToMap(touch ? g.copyWith(lastActivityAt: _clock().toUtc()) : g),
+  );
 
   /// Collections are stored as `{docId: doc}`.
   Map<String, Json> _readColl(String key) => {
@@ -270,6 +275,7 @@ final class LocalGameRepository implements GameRepository {
         claim.copyWith(id: cid, status: ClaimStatus.pending),
       );
     _writeJson(_claimsKey(id), claims);
+    _writeGame(game);
     return cid;
   }
 
@@ -305,8 +311,9 @@ final class LocalGameRepository implements GameRepository {
   Future<void> chooseClaim(
     GameId id,
     ClaimId claimId,
-    ClaimChoice choice,
-  ) async {
+    ClaimChoice? choice, {
+    PrizeId? releasePrizeId,
+  }) async {
     final claims = _readColl(_claimsKey(id));
     final old = claims[claimId.value];
     if (old == null) throw const GameFailure(GameFailureCode.conflict);
@@ -317,7 +324,14 @@ final class LocalGameRepository implements GameRepository {
     if (old['status'] != ClaimStatus.awaitingChoice.name) {
       throw const GameFailure(GameFailureCode.conflict);
     }
-    claims[claimId.value] = {...old, 'choice': choice.name};
+    if (old['choice'] != null || old['releasePrizeId'] != null) {
+      throw const GameFailure(GameFailureCode.conflict);
+    }
+    claims[claimId.value] = {
+      ...old,
+      'choice': ?choice?.name,
+      'releasePrizeId': ?releasePrizeId?.value,
+    };
     _writeJson(_claimsKey(id), claims);
   }
 
@@ -355,7 +369,9 @@ final class LocalGameRepository implements GameRepository {
     }
     final game = _requireGame(id);
     _requireHost(game);
-    if (game.status != GameStatus.running) {
+    final autoAbandoned =
+        game.status == GameStatus.abandoned && game.drawSeed == null;
+    if (game.status != GameStatus.running && !autoAbandoned) {
       throw const GameFailure(GameFailureCode.finished);
     }
     _writeGame(
@@ -365,6 +381,18 @@ final class LocalGameRepository implements GameRepository {
         endedAt: _clock().toUtc(),
         winners: [...game.winners, ...endOfGameWinners],
       ),
+    );
+  }
+
+  @override
+  Future<void> abandonIdle(GameId id) async {
+    final game = _readGame(id);
+    final deadline = game?.idleDeadline;
+    if (game == null || deadline == null) return;
+    if (_clock().toUtc().isBefore(deadline.toUtc())) return;
+    _writeGame(
+      game.copyWith(status: GameStatus.abandoned, endedAt: _clock().toUtc()),
+      touch: false,
     );
   }
 }

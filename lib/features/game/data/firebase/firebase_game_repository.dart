@@ -189,6 +189,7 @@ final class FirebaseGameRepository implements GameRepository {
             'status': GameStatus.running.name,
             'cardsHash': cardsHash,
             'startedAt': FieldValue.serverTimestamp(),
+            'lastActivityAt': FieldValue.serverTimestamp(),
           });
         });
       });
@@ -211,6 +212,7 @@ final class FirebaseGameRepository implements GameRepository {
       }
       tx.update(_game(id), {
         'draws': [for (final d in game.draws) d.value, item.value],
+        'lastActivityAt': FieldValue.serverTimestamp(),
       });
     });
   });
@@ -235,6 +237,12 @@ final class FirebaseGameRepository implements GameRepository {
         claim.copyWith(id: ClaimId(ref.id), status: ClaimStatus.pending),
       ),
     );
+    // Best effort: rules let any player bump only this field.
+    try {
+      await _game(id).update({'lastActivityAt': FieldValue.serverTimestamp()});
+    } on Object {
+      // The claim itself is what matters.
+    }
     return ClaimId(ref.id);
   });
 
@@ -253,24 +261,37 @@ final class FirebaseGameRepository implements GameRepository {
       'matched': _map.claimToMap(claim)['matched'],
       'offerPrizeId': claim.offerPrizeId?.value,
     });
+    await _game(id).update({'lastActivityAt': FieldValue.serverTimestamp()});
   });
 
   @override
   Future<void> setWinners(GameId id, List<Winner> winners) => _guard(
     () => _game(id).update({
       'winners': [for (final w in winners) _map.winnerToMap(w)],
+      'lastActivityAt': FieldValue.serverTimestamp(),
     }),
   );
 
   @override
-  Future<void> chooseClaim(GameId id, ClaimId claimId, ClaimChoice choice) =>
-      _guard(
-        () =>
-            _game(id)
-                .collection('claims')
-                .doc(claimId.value)
-                .update({'choice': choice.name}),
-      );
+  Future<void> chooseClaim(
+    GameId id,
+    ClaimId claimId,
+    ClaimChoice? choice, {
+    PrizeId? releasePrizeId,
+  }) => _guard(
+    () => _game(id).collection('claims').doc(claimId.value).update({
+      'choice': ?choice?.name,
+      'releasePrizeId': ?releasePrizeId?.value,
+    }),
+  );
+
+  @override
+  Future<void> abandonIdle(GameId id) => _guard(
+    () => _game(id).update({
+      'status': GameStatus.abandoned.name,
+      'endedAt': FieldValue.serverTimestamp(),
+    }),
+  );
 
   @override
   Future<void> confirmPrize(GameId id, {required List<Winner> winners}) =>
@@ -283,6 +304,7 @@ final class FirebaseGameRepository implements GameRepository {
                 _map.winnerToMap(w),
             ],
             'currentPrizeIndex': game.currentPrizeIndex + 1,
+            'lastActivityAt': FieldValue.serverTimestamp(),
           });
         });
       });
@@ -299,6 +321,7 @@ final class FirebaseGameRepository implements GameRepository {
           'winners': [
             for (final w in [...game.winners, ...winners]) _map.winnerToMap(w),
           ],
+          'lastActivityAt': FieldValue.serverTimestamp(),
         });
       });
     },

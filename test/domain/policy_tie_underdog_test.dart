@@ -52,6 +52,53 @@ void main() {
         isFalse,
       );
     });
+    test('limit 2: second prize is awarded directly', () {
+      const pol = PrizePolicy(maxPerPlayer: 2);
+      expect(
+        e.releaseOptions(held: [p1.id], offer: p2.id, policy: pol),
+        isEmpty,
+      );
+      expect(
+        e.isEligible(uid: a, target: p2, winners: won, policy: pol),
+        isTrue,
+      );
+    });
+    test('limit 2 exceeded: choose which prize to give up', () {
+      const pol = PrizePolicy(maxPerPlayer: 2);
+      expect(
+        e.releaseOptions(held: [p1.id, p2.id], offer: p3.id, policy: pol),
+        [p1.id, p2.id, p3.id],
+      );
+    });
+    test('matrix limits the options to valid sets', () {
+      // Who won p1 may only also hold p2.
+      const pol = PrizePolicy(
+        maxPerPlayer: 2,
+        allow: {
+          PrizeId('p1'): [PrizeId('p2')],
+        },
+      );
+      // {p1, p3} breaks the matrix: giving up p2 is not offered.
+      expect(
+        e.releaseOptions(held: [p1.id, p2.id], offer: p3.id, policy: pol),
+        [p1.id, p3.id],
+      );
+      // Holding p1, winning p3 asks (p1 + p3 not allowed together).
+      expect(e.releaseOptions(held: [p1.id], offer: p3.id, policy: pol), [
+        p1.id,
+        p3.id,
+      ]);
+    });
+    test('limit 1 (default) asks keep or swap', () {
+      expect(
+        e.releaseOptions(
+          held: [p1.id],
+          offer: p2.id,
+          policy: const PrizePolicy(),
+        ),
+        [p1.id, p2.id],
+      );
+    });
     test('unlimited with no matrix key', () {
       expect(
         e.isEligible(

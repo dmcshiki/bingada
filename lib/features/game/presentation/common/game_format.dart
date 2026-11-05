@@ -6,7 +6,6 @@ import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/card_template.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/entities/prize.dart';
-import 'package:tokingo/features/game/domain/services/pattern_detector.dart';
 
 /// Presentation-only formatting helpers shared by game, stream and result.
 extension TemplateFormat on CardTemplate {
@@ -55,10 +54,9 @@ String describeMatches(
   Prize? prize,
 }) {
   if (matched.isEmpty) return 'nenhum padrão completo';
-  const detector = PatternDetector();
-  return matched
-      .map((m) => detector.describe(m, headers: template.headers, prize: prize))
-      .join(' + ');
+  // Only the modality (e.g. "Vertical"), never the list of every closed line.
+  if (prize != null) return modalityName(prize);
+  return matched.first.kind.label;
 }
 
 Prize? prizeById(Game game, PrizeId id) {

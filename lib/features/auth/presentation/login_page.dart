@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
       padding: narrow
           ? const EdgeInsets.fromLTRB(16, 32, 16, 32)
           : const EdgeInsets.fromLTRB(64, 56, 64, 56),
-      child: const HowToPlayPanel(),
+      child: const HowToPlayPanel(compact: true),
     );
     return Scaffold(
       backgroundColor: AppColors.light,

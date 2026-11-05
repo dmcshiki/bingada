@@ -17,11 +17,7 @@ import 'package:tokingo/features/room/presentation/waiting/room_watch_controller
 
 /// Full public URL of a room (R25).
 String roomUrl(RoomCode code) {
-  final base = Uri.base;
-  final origin = base.isScheme('http') || base.isScheme('https')
-      ? base.origin
-      : 'https://tokingo.app';
-  return '$origin${AppRoutes.room(code)}';
+  return appUrl(AppRoutes.room(code));
 }
 
 /// 07 – Sala de espera do host. The host route wrapper switches to the panel

@@ -80,6 +80,7 @@ class AuditController extends ChangeNotifier {
           {
             'title': c.title,
             'detail': c.detail,
+            'technical': c.technical,
             'result': c.result,
             'ok': c.ok,
           },
@@ -123,20 +124,13 @@ class _AuditPageState extends State<AuditPage> {
   }
 
   late final TapGestureRecognizer _linkTap = TapGestureRecognizer()
-    ..onTap = () => openExternal(kCommitUrl);
+    ..onTap = () => openExternal(kRepoUrl);
 
   @override
   void dispose() {
     _linkTap.dispose();
     _c.dispose();
     super.dispose();
-  }
-
-  String get _shortId {
-    final v = widget.gameId.value;
-    return v.length > 10
-        ? '${v.substring(0, 6)}…${v.substring(v.length - 3)}'
-        : v;
   }
 
   @override
@@ -177,8 +171,6 @@ class _AuditPageState extends State<AuditPage> {
                                 text: 'pública',
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
-                              const TextSpan(text: ' · jogo '),
-                              TextSpan(text: _shortId, style: AppText.mono(15)),
                             ],
                           ),
                         ),
@@ -188,9 +180,6 @@ class _AuditPageState extends State<AuditPage> {
                       TextSpan(
                         style: AppText.body(13),
                         children: [
-                          const TextSpan(text: 'build '),
-                          TextSpan(text: kGitSha, style: AppText.mono(13)),
-                          const TextSpan(text: ' · '),
                           TextSpan(
                             text: 'código no GitHub ↗',
                             style: const TextStyle(color: AppColors.navy),
@@ -411,8 +400,15 @@ class _CheckTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       check.detail,
-                      style: AppText.mono(12, color: const Color(0xFF5A5859)),
+                      style: AppText.body(13, color: const Color(0xFF5A5859)),
                     ),
+                    if (check.technical.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        check.technical,
+                        style: AppText.mono(11, color: const Color(0xFF7A7879)),
+                      ),
+                    ],
                   ],
                 ),
               ),

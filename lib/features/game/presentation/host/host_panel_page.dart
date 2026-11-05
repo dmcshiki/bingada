@@ -8,6 +8,7 @@ import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/loading.dart';
 import 'package:tokingo/core/ui/widgets.dart';
+import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
@@ -17,6 +18,7 @@ import 'package:tokingo/features/game/domain/usecases/usecases.dart';
 import 'package:tokingo/features/game/presentation/common/game_format.dart';
 import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
 import 'package:tokingo/features/game/presentation/host/host_panel_controller.dart';
+import 'package:tokingo/features/game/presentation/player/player_game_page.dart';
 import 'package:tokingo/features/game/presentation/tiebreak/tiebreak_dialog.dart';
 import 'package:tokingo/features/game/presentation/verify_claim/verify_claim_dialog.dart';
 import 'package:tokingo/features/room/presentation/waiting/open_tab.dart';
@@ -97,6 +99,44 @@ class _HostPanelPageState extends State<HostPanelPage> {
     }
   }
 
+  bool get _hostHasCard {
+    final uid = sl<AuthRepository>().currentUser?.uid;
+    return uid != null && _c.players.any((p) => p.uid == uid);
+  }
+
+  Future<void> _openMyCard() => showDialog<void>(
+    context: context,
+    builder: (context) {
+      final size = MediaQuery.sizeOf(context);
+      return Dialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: size.width * .05,
+          vertical: size.height * .05,
+        ),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Stack(
+          children: [
+            Positioned.fill(child: PlayerGamePage(code: widget.code)),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton.filled(
+                tooltip: 'Fechar e voltar ao painel',
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.graphite,
+                  foregroundColor: AppColors.white,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
   Future<void> _confirmEnd() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -123,28 +163,38 @@ class _HostPanelPageState extends State<HostPanelPage> {
         body: SafeArea(
           child: Column(
             children: [
-              _HostHeader(game: g),
+              _HostHeader(game: g, onMyCard: _hostHasCard ? _openMyCard : null),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, box) {
-                    if (box.maxWidth >= 1200) {
-                      return Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              width: 420,
-                              child: SingleChildScrollView(child: board),
+                    if (box.maxWidth >= 700) {
+                      // Wide layout designed for >= 1260x760; on smaller
+                      // monitors it is scaled down to fit both axes.
+                      final w = box.maxWidth < 1260 ? 1260.0 : box.maxWidth;
+                      final h = box.maxHeight < 760 ? 760.0 : box.maxHeight;
+                      return FittedBox(
+                        child: SizedBox(
+                          width: w,
+                          height: h,
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(
+                                  width: 420,
+                                  child: SingleChildScrollView(child: board),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(child: center),
+                                const SizedBox(width: 20),
+                                SizedBox(
+                                  width: 420,
+                                  child: SingleChildScrollView(child: side),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 20),
-                            Expanded(child: center),
-                            const SizedBox(width: 20),
-                            SizedBox(
-                              width: 420,
-                              child: SingleChildScrollView(child: side),
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     }
@@ -172,9 +222,12 @@ class _HostPanelPageState extends State<HostPanelPage> {
 }
 
 class _HostHeader extends StatelessWidget {
-  const _HostHeader({required this.game});
+  const _HostHeader({required this.game, this.onMyCard});
 
   final Game game;
+
+  /// Opens the host's own card; null when the host has no card.
+  final VoidCallback? onMyCard;
 
   String get _access => switch (game.access) {
     DomainAccess(:final domains) =>
@@ -231,6 +284,13 @@ class _HostHeader extends StatelessWidget {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              if (onMyCard case final open?)
+                AppButton(
+                  label: 'minha cartela',
+                  height: 44,
+                  icon: Icons.grid_view_rounded,
+                  onPressed: open,
+                ),
               Pill(
                 label: _access,
                 color: AppColors.navy,
@@ -438,19 +498,18 @@ class _DrawPanel extends StatelessWidget {
                 runSpacing: 10,
                 children: [
                   AppButton(
-                    label: 'Abrir minha cartela',
-                    kind: AppButtonKind.secondary,
-                    height: 44,
-                    fontSize: 13,
-                    onPressed: () => context.go(AppRoutes.play(game.roomCode)),
-                  ),
-                  AppButton(
                     label: 'Encerrar partida',
                     kind: AppButtonKind.outline,
                     height: 44,
                     fontSize: 13,
-                    onPressed: controller.busy ? null : onEnd,
+                    // Every BINGO must be checked before ending.
+                    onPressed:
+                        controller.busy || controller.endBlockedReason != null
+                        ? null
+                        : onEnd,
                   ),
+                  if (controller.endBlockedReason case final why?)
+                    Text(why, style: AppText.body(12)),
                 ],
               ),
             ],

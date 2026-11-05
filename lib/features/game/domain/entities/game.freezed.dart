@@ -1268,7 +1268,9 @@ mixin _$Game {
  String get salt;/// sha256(drawSeed) published at creation (hex).
  String get drawCommit;/// sha256 of the ordered list of cards, published at start (hex).
  String? get cardsHash;/// Revealed only when finished/abandoned (hex).
- String? get drawSeed; int get playerCount; int get maxPlayers; int get currentPrizeIndex; List<ItemId> get draws; List<Winner> get winners; DateTime get createdAt; DateTime? get startedAt; DateTime? get endedAt;
+ String? get drawSeed; int get playerCount; int get maxPlayers; int get currentPrizeIndex; List<ItemId> get draws; List<Winner> get winners; DateTime get createdAt; DateTime? get startedAt; DateTime? get endedAt;/// Last host/player action (draw, claim, confirmation). Drives the
+/// automatic end after [idleLimit] without activity.
+ DateTime? get lastActivityAt;
 /// Create a copy of Game
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1280,20 +1282,20 @@ $GameCopyWith<Game> get copyWith => _$GameCopyWithImpl<Game>(this as Game, _$ide
 @override
 bool operator ==(Object other) {
   final _this = this as Game;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Game&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.roomCode, _this.roomCode) || other.roomCode == _this.roomCode)&&(identical(other.hostUid, _this.hostUid) || other.hostUid == _this.hostUid)&&(identical(other.eventName, _this.eventName) || other.eventName == _this.eventName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.access, _this.access) || other.access == _this.access)&&(identical(other.template, _this.template) || other.template == _this.template)&&const DeepCollectionEquality().equals(other.prizes, _this.prizes)&&const DeepCollectionEquality().equals(other.endOfGamePrizes, _this.endOfGamePrizes)&&(identical(other.prizePolicy, _this.prizePolicy) || other.prizePolicy == _this.prizePolicy)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.salt, _this.salt) || other.salt == _this.salt)&&(identical(other.drawCommit, _this.drawCommit) || other.drawCommit == _this.drawCommit)&&(identical(other.cardsHash, _this.cardsHash) || other.cardsHash == _this.cardsHash)&&(identical(other.drawSeed, _this.drawSeed) || other.drawSeed == _this.drawSeed)&&(identical(other.playerCount, _this.playerCount) || other.playerCount == _this.playerCount)&&(identical(other.maxPlayers, _this.maxPlayers) || other.maxPlayers == _this.maxPlayers)&&(identical(other.currentPrizeIndex, _this.currentPrizeIndex) || other.currentPrizeIndex == _this.currentPrizeIndex)&&const DeepCollectionEquality().equals(other.draws, _this.draws)&&const DeepCollectionEquality().equals(other.winners, _this.winners)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.endedAt, _this.endedAt) || other.endedAt == _this.endedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Game&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.roomCode, _this.roomCode) || other.roomCode == _this.roomCode)&&(identical(other.hostUid, _this.hostUid) || other.hostUid == _this.hostUid)&&(identical(other.eventName, _this.eventName) || other.eventName == _this.eventName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.access, _this.access) || other.access == _this.access)&&(identical(other.template, _this.template) || other.template == _this.template)&&const DeepCollectionEquality().equals(other.prizes, _this.prizes)&&const DeepCollectionEquality().equals(other.endOfGamePrizes, _this.endOfGamePrizes)&&(identical(other.prizePolicy, _this.prizePolicy) || other.prizePolicy == _this.prizePolicy)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.salt, _this.salt) || other.salt == _this.salt)&&(identical(other.drawCommit, _this.drawCommit) || other.drawCommit == _this.drawCommit)&&(identical(other.cardsHash, _this.cardsHash) || other.cardsHash == _this.cardsHash)&&(identical(other.drawSeed, _this.drawSeed) || other.drawSeed == _this.drawSeed)&&(identical(other.playerCount, _this.playerCount) || other.playerCount == _this.playerCount)&&(identical(other.maxPlayers, _this.maxPlayers) || other.maxPlayers == _this.maxPlayers)&&(identical(other.currentPrizeIndex, _this.currentPrizeIndex) || other.currentPrizeIndex == _this.currentPrizeIndex)&&const DeepCollectionEquality().equals(other.draws, _this.draws)&&const DeepCollectionEquality().equals(other.winners, _this.winners)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.endedAt, _this.endedAt) || other.endedAt == _this.endedAt)&&(identical(other.lastActivityAt, _this.lastActivityAt) || other.lastActivityAt == _this.lastActivityAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Game;
-  return Object.hashAll([runtimeType,_this.id,_this.roomCode,_this.hostUid,_this.eventName,_this.status,_this.access,_this.template,const DeepCollectionEquality().hash(_this.prizes),const DeepCollectionEquality().hash(_this.endOfGamePrizes),_this.prizePolicy,_this.settings,_this.salt,_this.drawCommit,_this.cardsHash,_this.drawSeed,_this.playerCount,_this.maxPlayers,_this.currentPrizeIndex,const DeepCollectionEquality().hash(_this.draws),const DeepCollectionEquality().hash(_this.winners),_this.createdAt,_this.startedAt,_this.endedAt]);
+  return Object.hashAll([runtimeType,_this.id,_this.roomCode,_this.hostUid,_this.eventName,_this.status,_this.access,_this.template,const DeepCollectionEquality().hash(_this.prizes),const DeepCollectionEquality().hash(_this.endOfGamePrizes),_this.prizePolicy,_this.settings,_this.salt,_this.drawCommit,_this.cardsHash,_this.drawSeed,_this.playerCount,_this.maxPlayers,_this.currentPrizeIndex,const DeepCollectionEquality().hash(_this.draws),const DeepCollectionEquality().hash(_this.winners),_this.createdAt,_this.startedAt,_this.endedAt,_this.lastActivityAt]);
 }
 
 @override
 String toString() {
   final _this = this as Game;
-  return 'Game(id: ${_this.id}, roomCode: ${_this.roomCode}, hostUid: ${_this.hostUid}, eventName: ${_this.eventName}, status: ${_this.status}, access: ${_this.access}, template: ${_this.template}, prizes: ${_this.prizes}, endOfGamePrizes: ${_this.endOfGamePrizes}, prizePolicy: ${_this.prizePolicy}, settings: ${_this.settings}, salt: ${_this.salt}, drawCommit: ${_this.drawCommit}, cardsHash: ${_this.cardsHash}, drawSeed: ${_this.drawSeed}, playerCount: ${_this.playerCount}, maxPlayers: ${_this.maxPlayers}, currentPrizeIndex: ${_this.currentPrizeIndex}, draws: ${_this.draws}, winners: ${_this.winners}, createdAt: ${_this.createdAt}, startedAt: ${_this.startedAt}, endedAt: ${_this.endedAt})';
+  return 'Game(id: ${_this.id}, roomCode: ${_this.roomCode}, hostUid: ${_this.hostUid}, eventName: ${_this.eventName}, status: ${_this.status}, access: ${_this.access}, template: ${_this.template}, prizes: ${_this.prizes}, endOfGamePrizes: ${_this.endOfGamePrizes}, prizePolicy: ${_this.prizePolicy}, settings: ${_this.settings}, salt: ${_this.salt}, drawCommit: ${_this.drawCommit}, cardsHash: ${_this.cardsHash}, drawSeed: ${_this.drawSeed}, playerCount: ${_this.playerCount}, maxPlayers: ${_this.maxPlayers}, currentPrizeIndex: ${_this.currentPrizeIndex}, draws: ${_this.draws}, winners: ${_this.winners}, createdAt: ${_this.createdAt}, startedAt: ${_this.startedAt}, endedAt: ${_this.endedAt}, lastActivityAt: ${_this.lastActivityAt})';
 }
 
 
@@ -1304,7 +1306,7 @@ abstract mixin class $GameCopyWith<$Res>  {
   factory $GameCopyWith(Game value, $Res Function(Game) _then) = _$GameCopyWithImpl;
 @useResult
 $Res call({
- GameId id, RoomCode roomCode, UserId hostUid, String eventName, GameStatus status, AccessPolicy access, CardTemplate template, List<Prize> prizes, List<Prize> endOfGamePrizes, PrizePolicy prizePolicy, GameSettings settings, String salt, String drawCommit, String? cardsHash, String? drawSeed, int playerCount, int maxPlayers, int currentPrizeIndex, List<ItemId> draws, List<Winner> winners, DateTime createdAt, DateTime? startedAt, DateTime? endedAt
+ GameId id, RoomCode roomCode, UserId hostUid, String eventName, GameStatus status, AccessPolicy access, CardTemplate template, List<Prize> prizes, List<Prize> endOfGamePrizes, PrizePolicy prizePolicy, GameSettings settings, String salt, String drawCommit, String? cardsHash, String? drawSeed, int playerCount, int maxPlayers, int currentPrizeIndex, List<ItemId> draws, List<Winner> winners, DateTime createdAt, DateTime? startedAt, DateTime? endedAt, DateTime? lastActivityAt
 });
 
 
@@ -1321,7 +1323,7 @@ class _$GameCopyWithImpl<$Res>
 
 /// Create a copy of Game
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? roomCode = null,Object? hostUid = null,Object? eventName = null,Object? status = null,Object? access = null,Object? template = null,Object? prizes = null,Object? endOfGamePrizes = null,Object? prizePolicy = null,Object? settings = null,Object? salt = null,Object? drawCommit = null,Object? cardsHash = freezed,Object? drawSeed = freezed,Object? playerCount = null,Object? maxPlayers = null,Object? currentPrizeIndex = null,Object? draws = null,Object? winners = null,Object? createdAt = null,Object? startedAt = freezed,Object? endedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? roomCode = null,Object? hostUid = null,Object? eventName = null,Object? status = null,Object? access = null,Object? template = null,Object? prizes = null,Object? endOfGamePrizes = null,Object? prizePolicy = null,Object? settings = null,Object? salt = null,Object? drawCommit = null,Object? cardsHash = freezed,Object? drawSeed = freezed,Object? playerCount = null,Object? maxPlayers = null,Object? currentPrizeIndex = null,Object? draws = null,Object? winners = null,Object? createdAt = null,Object? startedAt = freezed,Object? endedAt = freezed,Object? lastActivityAt = freezed,}) {
   return _then(Game(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GameId,roomCode: null == roomCode ? _self.roomCode : roomCode // ignore: cast_nullable_to_non_nullable
@@ -1346,6 +1348,7 @@ as List<ItemId>,winners: null == winners ? _self.winners : winners // ignore: ca
 as List<Winner>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,endedAt: freezed == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastActivityAt: freezed == lastActivityAt ? _self.lastActivityAt : lastActivityAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -1467,10 +1470,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt,  DateTime? lastActivityAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Game() when $default != null:
-return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt);case _:
+return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt,_that.lastActivityAt);case _:
   return orElse();
 
 }
@@ -1488,10 +1491,10 @@ return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.stat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt,  DateTime? lastActivityAt)  $default,) {final _that = this;
 switch (_that) {
 case _Game():
-return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt);case _:
+return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt,_that.lastActivityAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1508,10 +1511,10 @@ return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.stat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameId id,  RoomCode roomCode,  UserId hostUid,  String eventName,  GameStatus status,  AccessPolicy access,  CardTemplate template,  List<Prize> prizes,  List<Prize> endOfGamePrizes,  PrizePolicy prizePolicy,  GameSettings settings,  String salt,  String drawCommit,  String? cardsHash,  String? drawSeed,  int playerCount,  int maxPlayers,  int currentPrizeIndex,  List<ItemId> draws,  List<Winner> winners,  DateTime createdAt,  DateTime? startedAt,  DateTime? endedAt,  DateTime? lastActivityAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Game() when $default != null:
-return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt);case _:
+return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.status,_that.access,_that.template,_that.prizes,_that.endOfGamePrizes,_that.prizePolicy,_that.settings,_that.salt,_that.drawCommit,_that.cardsHash,_that.drawSeed,_that.playerCount,_that.maxPlayers,_that.currentPrizeIndex,_that.draws,_that.winners,_that.createdAt,_that.startedAt,_that.endedAt,_that.lastActivityAt);case _:
   return null;
 
 }
@@ -1523,7 +1526,7 @@ return $default(_that.id,_that.roomCode,_that.hostUid,_that.eventName,_that.stat
 
 
 class _Game extends Game {
-  const _Game({required this.id, required this.roomCode, required this.hostUid, required this.eventName, this.status = GameStatus.lobby, required this.access, required this.template, required  List<Prize> prizes,  List<Prize> endOfGamePrizes = const <Prize>[], this.prizePolicy = const PrizePolicy(), this.settings = const GameSettings(), required this.salt, required this.drawCommit, this.cardsHash, this.drawSeed, this.playerCount = 0, this.maxPlayers = 60, this.currentPrizeIndex = 0,  List<ItemId> draws = const <ItemId>[],  List<Winner> winners = const <Winner>[], required this.createdAt, this.startedAt, this.endedAt}): _prizes = prizes,_endOfGamePrizes = endOfGamePrizes,_draws = draws,_winners = winners,super._();
+  const _Game({required this.id, required this.roomCode, required this.hostUid, required this.eventName, this.status = GameStatus.lobby, required this.access, required this.template, required  List<Prize> prizes,  List<Prize> endOfGamePrizes = const <Prize>[], this.prizePolicy = const PrizePolicy(), this.settings = const GameSettings(), required this.salt, required this.drawCommit, this.cardsHash, this.drawSeed, this.playerCount = 0, this.maxPlayers = 60, this.currentPrizeIndex = 0,  List<ItemId> draws = const <ItemId>[],  List<Winner> winners = const <Winner>[], required this.createdAt, this.startedAt, this.endedAt, this.lastActivityAt}): _prizes = prizes,_endOfGamePrizes = endOfGamePrizes,_draws = draws,_winners = winners,super._();
   
 
 @override final  GameId id;
@@ -1577,6 +1580,9 @@ class _Game extends Game {
 @override final  DateTime createdAt;
 @override final  DateTime? startedAt;
 @override final  DateTime? endedAt;
+/// Last host/player action (draw, claim, confirmation). Drives the
+/// automatic end after [idleLimit] without activity.
+@override final  DateTime? lastActivityAt;
 
 /// Create a copy of Game
 /// with the given fields replaced by the non-null parameter values.
@@ -1588,18 +1594,18 @@ _$GameCopyWith<_Game> get copyWith => __$GameCopyWithImpl<_Game>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Game&&(identical(other.id, id) || other.id == id)&&(identical(other.roomCode, roomCode) || other.roomCode == roomCode)&&(identical(other.hostUid, hostUid) || other.hostUid == hostUid)&&(identical(other.eventName, eventName) || other.eventName == eventName)&&(identical(other.status, status) || other.status == status)&&(identical(other.access, access) || other.access == access)&&(identical(other.template, template) || other.template == template)&&const DeepCollectionEquality().equals(other.prizes, _prizes)&&const DeepCollectionEquality().equals(other.endOfGamePrizes, _endOfGamePrizes)&&(identical(other.prizePolicy, prizePolicy) || other.prizePolicy == prizePolicy)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.salt, salt) || other.salt == salt)&&(identical(other.drawCommit, drawCommit) || other.drawCommit == drawCommit)&&(identical(other.cardsHash, cardsHash) || other.cardsHash == cardsHash)&&(identical(other.drawSeed, drawSeed) || other.drawSeed == drawSeed)&&(identical(other.playerCount, playerCount) || other.playerCount == playerCount)&&(identical(other.maxPlayers, maxPlayers) || other.maxPlayers == maxPlayers)&&(identical(other.currentPrizeIndex, currentPrizeIndex) || other.currentPrizeIndex == currentPrizeIndex)&&const DeepCollectionEquality().equals(other.draws, _draws)&&const DeepCollectionEquality().equals(other.winners, _winners)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Game&&(identical(other.id, id) || other.id == id)&&(identical(other.roomCode, roomCode) || other.roomCode == roomCode)&&(identical(other.hostUid, hostUid) || other.hostUid == hostUid)&&(identical(other.eventName, eventName) || other.eventName == eventName)&&(identical(other.status, status) || other.status == status)&&(identical(other.access, access) || other.access == access)&&(identical(other.template, template) || other.template == template)&&const DeepCollectionEquality().equals(other.prizes, _prizes)&&const DeepCollectionEquality().equals(other.endOfGamePrizes, _endOfGamePrizes)&&(identical(other.prizePolicy, prizePolicy) || other.prizePolicy == prizePolicy)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.salt, salt) || other.salt == salt)&&(identical(other.drawCommit, drawCommit) || other.drawCommit == drawCommit)&&(identical(other.cardsHash, cardsHash) || other.cardsHash == cardsHash)&&(identical(other.drawSeed, drawSeed) || other.drawSeed == drawSeed)&&(identical(other.playerCount, playerCount) || other.playerCount == playerCount)&&(identical(other.maxPlayers, maxPlayers) || other.maxPlayers == maxPlayers)&&(identical(other.currentPrizeIndex, currentPrizeIndex) || other.currentPrizeIndex == currentPrizeIndex)&&const DeepCollectionEquality().equals(other.draws, _draws)&&const DeepCollectionEquality().equals(other.winners, _winners)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.lastActivityAt, lastActivityAt) || other.lastActivityAt == lastActivityAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,roomCode,hostUid,eventName,status,access,template,const DeepCollectionEquality().hash(_prizes),const DeepCollectionEquality().hash(_endOfGamePrizes),prizePolicy,settings,salt,drawCommit,cardsHash,drawSeed,playerCount,maxPlayers,currentPrizeIndex,const DeepCollectionEquality().hash(_draws),const DeepCollectionEquality().hash(_winners),createdAt,startedAt,endedAt]);
+    return Object.hashAll([runtimeType,id,roomCode,hostUid,eventName,status,access,template,const DeepCollectionEquality().hash(_prizes),const DeepCollectionEquality().hash(_endOfGamePrizes),prizePolicy,settings,salt,drawCommit,cardsHash,drawSeed,playerCount,maxPlayers,currentPrizeIndex,const DeepCollectionEquality().hash(_draws),const DeepCollectionEquality().hash(_winners),createdAt,startedAt,endedAt,lastActivityAt]);
 }
 
 @override
 String toString() {
-    return 'Game(id: $id, roomCode: $roomCode, hostUid: $hostUid, eventName: $eventName, status: $status, access: $access, template: $template, prizes: $prizes, endOfGamePrizes: $endOfGamePrizes, prizePolicy: $prizePolicy, settings: $settings, salt: $salt, drawCommit: $drawCommit, cardsHash: $cardsHash, drawSeed: $drawSeed, playerCount: $playerCount, maxPlayers: $maxPlayers, currentPrizeIndex: $currentPrizeIndex, draws: $draws, winners: $winners, createdAt: $createdAt, startedAt: $startedAt, endedAt: $endedAt)';
+    return 'Game(id: $id, roomCode: $roomCode, hostUid: $hostUid, eventName: $eventName, status: $status, access: $access, template: $template, prizes: $prizes, endOfGamePrizes: $endOfGamePrizes, prizePolicy: $prizePolicy, settings: $settings, salt: $salt, drawCommit: $drawCommit, cardsHash: $cardsHash, drawSeed: $drawSeed, playerCount: $playerCount, maxPlayers: $maxPlayers, currentPrizeIndex: $currentPrizeIndex, draws: $draws, winners: $winners, createdAt: $createdAt, startedAt: $startedAt, endedAt: $endedAt, lastActivityAt: $lastActivityAt)';
 }
 
 
@@ -1610,7 +1616,7 @@ abstract mixin class _$GameCopyWith<$Res> implements $GameCopyWith<$Res> {
   factory _$GameCopyWith(_Game value, $Res Function(_Game) _then) = __$GameCopyWithImpl;
 @override @useResult
 $Res call({
- GameId id, RoomCode roomCode, UserId hostUid, String eventName, GameStatus status, AccessPolicy access, CardTemplate template, List<Prize> prizes, List<Prize> endOfGamePrizes, PrizePolicy prizePolicy, GameSettings settings, String salt, String drawCommit, String? cardsHash, String? drawSeed, int playerCount, int maxPlayers, int currentPrizeIndex, List<ItemId> draws, List<Winner> winners, DateTime createdAt, DateTime? startedAt, DateTime? endedAt
+ GameId id, RoomCode roomCode, UserId hostUid, String eventName, GameStatus status, AccessPolicy access, CardTemplate template, List<Prize> prizes, List<Prize> endOfGamePrizes, PrizePolicy prizePolicy, GameSettings settings, String salt, String drawCommit, String? cardsHash, String? drawSeed, int playerCount, int maxPlayers, int currentPrizeIndex, List<ItemId> draws, List<Winner> winners, DateTime createdAt, DateTime? startedAt, DateTime? endedAt, DateTime? lastActivityAt
 });
 
 
@@ -1627,7 +1633,7 @@ class __$GameCopyWithImpl<$Res>
 
 /// Create a copy of Game
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? roomCode = null,Object? hostUid = null,Object? eventName = null,Object? status = null,Object? access = null,Object? template = null,Object? prizes = null,Object? endOfGamePrizes = null,Object? prizePolicy = null,Object? settings = null,Object? salt = null,Object? drawCommit = null,Object? cardsHash = freezed,Object? drawSeed = freezed,Object? playerCount = null,Object? maxPlayers = null,Object? currentPrizeIndex = null,Object? draws = null,Object? winners = null,Object? createdAt = null,Object? startedAt = freezed,Object? endedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? roomCode = null,Object? hostUid = null,Object? eventName = null,Object? status = null,Object? access = null,Object? template = null,Object? prizes = null,Object? endOfGamePrizes = null,Object? prizePolicy = null,Object? settings = null,Object? salt = null,Object? drawCommit = null,Object? cardsHash = freezed,Object? drawSeed = freezed,Object? playerCount = null,Object? maxPlayers = null,Object? currentPrizeIndex = null,Object? draws = null,Object? winners = null,Object? createdAt = null,Object? startedAt = freezed,Object? endedAt = freezed,Object? lastActivityAt = freezed,}) {
   return _then(_Game(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GameId,roomCode: null == roomCode ? _self.roomCode : roomCode // ignore: cast_nullable_to_non_nullable
@@ -1652,6 +1658,7 @@ as List<ItemId>,winners: null == winners ? _self._winners : winners // ignore: c
 as List<Winner>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,endedAt: freezed == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastActivityAt: freezed == lastActivityAt ? _self.lastActivityAt : lastActivityAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }

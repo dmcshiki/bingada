@@ -11,12 +11,9 @@ const bool kUseEmulators = bool.fromEnvironment('TOKINGO_EMULATORS');
 /// Commit the build was made from (CI passes `--dart-define=GIT_SHA=...`).
 const String kGitSha = String.fromEnvironment('GIT_SHA', defaultValue: 'dev');
 
-/// Public repository, used by the audit page to link to [kGitSha].
+/// Public repository root, linked from the audit page. Always the root: the
+/// `/commit/<sha>` page of a big commit times out on GitHub (504).
 const String kRepoUrl = String.fromEnvironment(
   'TOKINGO_REPO_URL',
-  defaultValue: 'https://github.com/tokingo/tokingo',
+  defaultValue: 'https://github.com/dmcshiki/bingada',
 );
-
-/// Link to the exact source of this build (falls back to the repo root).
-String get kCommitUrl =>
-    kGitSha == 'dev' ? kRepoUrl : '$kRepoUrl/commit/$kGitSha';

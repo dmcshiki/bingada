@@ -87,8 +87,51 @@ class PlayerGameController extends GameWatchController {
     notifyListeners();
   }
 
+  /// Pending claim ids already seen (chime only for new ones).
+  final Set<ClaimId> _seenPending = {};
+
+  /// Called once per NEW pending claim from anyone (not on initial load).
+  void Function()? onNewPendingClaim;
+
+  @override
+  void onClaimsChanged(List<Claim> next, {required bool first}) {
+    var fresh = false;
+    for (final c in next) {
+      if (c.status == ClaimStatus.pending && _seenPending.add(c.id)) {
+        fresh = true;
+      }
+    }
+    if (fresh && !first) onNewPendingClaim?.call();
+  }
+
+  /// Text shown instead of the current ball while the host checks a BINGO
+  /// or decides a tie; null when nothing is pending.
+  String? get checkingLabel {
+    final groups = <(PrizeId, int), int>{};
+    for (final c in claims) {
+      if (c.status != ClaimStatus.pending) continue;
+      final k = (c.prizeId, c.drawIndex);
+      groups[k] = (groups[k] ?? 0) + 1;
+    }
+    if (groups.isEmpty) return null;
+    return groups.values.any((n) => n >= 2)
+        ? 'desempate em andamento…'
+        : 'conferindo um BINGO…';
+  }
+
   @override
   void onGameChanged(Game? previous, Game next) {
+    // A new ball closes any result overlay (not the waiting one).
+    if (previous != null &&
+        next.draws.length > previous.draws.length &&
+        _followed != null) {
+      final kind = overlay;
+      if (kind != null &&
+          kind != ClaimOverlayKind.waiting &&
+          kind != ClaimOverlayKind.choose) {
+        _followed = null;
+      }
+    }
     // Any prize that just got its winners: patterns confirmed by the host, or
     // the azarão decided mid-game (last one left standing).
     if (previous != null && next.status == GameStatus.running) {
@@ -175,14 +218,19 @@ class PlayerGameController extends GameWatchController {
   /// a tied player can be offered a prize later).
   Claim? get choiceClaim {
     for (final c in myClaims.reversed) {
-      if (c.status == ClaimStatus.awaitingChoice && c.choice == null) return c;
+      if (c.status == ClaimStatus.awaitingChoice && !c.answered) return c;
     }
     return null;
   }
 
   bool choosing = false;
 
-  Future<void> choose(ClaimChoice choice) async {
+  Future<void> choose(ClaimChoice choice) => _answer(choice, null);
+
+  /// Gives up [prize] (the new one or one already held).
+  Future<void> release(PrizeId prize) => _answer(null, prize);
+
+  Future<void> _answer(ClaimChoice? choice, PrizeId? release) async {
     final g = game;
     final c = choiceClaim;
     if (g == null || c == null || choosing) return;
@@ -190,7 +238,7 @@ class PlayerGameController extends GameWatchController {
     _followed = c.id;
     notifyListeners();
     try {
-      await _repoRef.chooseClaim(g.id, c.id, choice);
+      await _repoRef.chooseClaim(g.id, c.id, choice, releasePrizeId: release);
     } on Object {
       sendError = 'Não deu para enviar sua escolha. Tente de novo.';
     } finally {

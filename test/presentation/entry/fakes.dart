@@ -103,6 +103,9 @@ class FakeGameRepository implements GameRepository {
   Future<BingoCard?> getCard(GameId id, UserId uid) async => null;
 
   @override
+  Future<void> abandonIdle(GameId id) async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

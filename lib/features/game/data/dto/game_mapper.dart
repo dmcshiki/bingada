@@ -276,6 +276,9 @@ final class GameMapper {
     'createdAt': dates.encode(g.createdAt),
     'startedAt': g.startedAt == null ? null : dates.encode(g.startedAt!),
     'endedAt': g.endedAt == null ? null : dates.encode(g.endedAt!),
+    'lastActivityAt': g.lastActivityAt == null
+        ? null
+        : dates.encode(g.lastActivityAt!),
   };
 
   Game gameFromMap(String id, Json m) => Game(
@@ -304,6 +307,7 @@ final class GameMapper {
     createdAt: _date(m['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     startedAt: _date(m['startedAt']),
     endedAt: _date(m['endedAt']),
+    lastActivityAt: _date(m['lastActivityAt']),
   );
 
   // ----------------------------------------------------------- player/card
@@ -356,6 +360,7 @@ final class GameMapper {
     'status': c.status.name,
     'offerPrizeId': c.offerPrizeId?.value,
     'choice': c.choice?.name,
+    'releasePrizeId': c.releasePrizeId?.value,
     'createdAt': dates.encode(c.createdAt),
   };
 
@@ -372,6 +377,9 @@ final class GameMapper {
     choice: m['choice'] == null
         ? null
         : _enum(ClaimChoice.values, m['choice'], ClaimChoice.keep),
+    releasePrizeId: m['releasePrizeId'] is String
+        ? PrizeId(m['releasePrizeId']! as String)
+        : null,
     verdict: m['verdict'] == null
         ? null
         : _enum(ClaimVerdict.values, m['verdict'], ClaimVerdict.tampered),

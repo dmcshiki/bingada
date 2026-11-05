@@ -60,7 +60,13 @@ class TiePlayerCard extends StatelessWidget {
             ),
             if (how case final h?) ...[
               const SizedBox(height: 16),
-              Text(h, style: AppText.body(14, color: fg)),
+              Text(
+                h,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(14, color: fg),
+              ),
             ],
             const SizedBox(height: 16),
             DecoratedBox(

@@ -52,29 +52,61 @@ class TokenBox extends StatelessWidget {
   }
 }
 
-/// Avatar made of a token with initials.
+/// Avatar made of a token: the user's photo clipped to the token shape, with
+/// the initials as fallback (no photo, still loading or load error).
 class AvatarToken extends StatelessWidget {
   const AvatarToken({
     required this.initials,
     required this.size,
     super.key,
     this.color = AppColors.navy,
+    this.photoUrl,
   });
 
   final String initials;
   final double size;
   final Color color;
+  final String? photoUrl;
 
   @override
-  Widget build(BuildContext context) => TokenBox(
-    size: size,
-    color: color,
-    radiusFactor: 0.28,
-    child: Text(
+  Widget build(BuildContext context) {
+    final fallback = Text(
       initials,
       style: AppText.display(size * 0.34, color: AppColors.onColor(color)),
-    ),
-  );
+    );
+    final url = photoUrl;
+    if (url == null || url.isEmpty) {
+      return TokenBox(
+        size: size,
+        color: color,
+        radiusFactor: 0.28,
+        child: fallback,
+      );
+    }
+    return Transform.rotate(
+      angle: TokenBox.tilt,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.28),
+        child: Container(
+          width: size,
+          height: size,
+          color: color,
+          alignment: Alignment.center,
+          child: Image.network(
+            url,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) =>
+                Transform.rotate(angle: -TokenBox.tilt, child: fallback),
+            loadingBuilder: (_, child, progress) => progress == null
+                ? child
+                : Transform.rotate(angle: -TokenBox.tilt, child: fallback),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Big decorative tilted shape used on backgrounds. Purely decorative.
@@ -448,7 +480,8 @@ class _CellView extends StatelessWidget {
                         angle: cell.stampRotation * math.pi / 180,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: .88),
+                            // Stamp: off-palette dark so it never looks like a column.
+                            color: AppColors.graphite.withValues(alpha: .9),
                             borderRadius: BorderRadius.circular(radius - 2),
                           ),
                         ),

@@ -95,11 +95,34 @@ service cloud.firestore {
           && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid));
       }
 
+      // Last activity, falling back to start/creation for old games.
+      function lastActivity() {
+        let la = resource.data.get('lastActivityAt', null);
+        let sa = resource.data.get('startedAt', null);
+        return la != null ? la : (sa != null ? sa : resource.data.createdAt);
+      }
+      // No server: any signed-in client ends a game idle for 1 hour.
+      function idleAbandonOk() {
+        return changed().hasOnly(['status', 'endedAt'])
+          && resource.data.status in ['lobby', 'running']
+          && request.resource.data.status == 'abandoned'
+          && request.resource.data.endedAt == request.time
+          && request.time > lastActivity() + duration.value(1, 'h');
+      }
+      // A player creating a claim bumps only the activity clock.
+      function activityBumpOk() {
+        return changed().hasOnly(['lastActivityAt'])
+          && resource.data.status == 'running'
+          && request.resource.data.lastActivityAt == request.time;
+      }
+
       allow update: if signedIn() && (
         (resource.data.hostUid == request.auth.uid
           && immutableOk() && drawsOk() && statusOk() && seedOk()
           && request.resource.data.playerCount == resource.data.playerCount)
         || joinIncrementOk()
+        || idleAbandonOk()
+        || activityBumpOk()
       );
       allow delete: if false;
 
@@ -135,6 +158,7 @@ service cloud.firestore {
           && request.resource.data.verdict == null
           && request.resource.data.get('choice', null) == null
           && request.resource.data.get('offerPrizeId', null) == null
+          && request.resource.data.get('releasePrizeId', null) == null
           && gameBefore(gameId).status == 'running'
           && request.resource.data.drawIndex == gameBefore(gameId).draws.size()
           // Several prizes can be open at once (Horizontal + Vertical) and
@@ -148,13 +172,21 @@ service cloud.firestore {
           (gameBefore(gameId).hostUid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['status', 'verdict', 'matched', 'offerPrizeId']))
-          // Winner already holding a prize answers keep/swap, once.
+          // Winner over the prize limit answers once: the prize given up
+          // (releasePrizeId) and/or the legacy keep/swap.
           || (resource.data.uid == request.auth.uid
             && resource.data.status == 'awaitingChoice'
             && resource.data.get('choice', null) == null
+            && resource.data.get('releasePrizeId', null) == null
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['choice'])
-            && request.resource.data.choice in ['keep', 'swap'])
+                 .hasOnly(['choice', 'releasePrizeId'])
+            && request.resource.data.get('choice', null) in [null, 'keep', 'swap']
+            && (request.resource.data.get('releasePrizeId', null) == null
+              || (request.resource.data.releasePrizeId is string
+                && request.resource.data.releasePrizeId.size() > 0
+                && request.resource.data.releasePrizeId.size() <= 64))
+            && (request.resource.data.get('choice', null) != null
+              || request.resource.data.get('releasePrizeId', null) != null))
         );
         allow delete: if false;
       }

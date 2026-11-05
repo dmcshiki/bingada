@@ -75,8 +75,18 @@ abstract interface class GameRepository {
   /// Host: replaces the whole winners list (prize swaps).
   Future<void> setWinners(GameId id, List<Winner> winners);
 
-  /// Player: answers an `awaitingChoice` claim of their own.
-  Future<void> chooseClaim(GameId id, ClaimId claimId, ClaimChoice choice);
+  /// Player: answers an `awaitingChoice` claim of their own. [choice] is the
+  /// legacy keep/swap; [releasePrizeId] names the prize given up.
+  Future<void> chooseClaim(
+    GameId id,
+    ClaimId claimId,
+    ClaimChoice? choice, {
+    PrizeId? releasePrizeId,
+  });
+
+  /// Anyone: ends a lobby/running game as `abandoned` after
+  /// [Game.idleLimit] without activity (no seed reveal; the host does that).
+  Future<void> abandonIdle(GameId id);
 
   /// finished/abandoned: reveals the seed and stores end-of-game winners.
   Future<void> finish(

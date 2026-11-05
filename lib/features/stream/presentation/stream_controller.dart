@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:tokingo/core/types/ids.dart';
+import 'package:tokingo/core/ui/sound/bingo_sound.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/entities/prize.dart';
@@ -27,10 +28,33 @@ final class ValidOverlay extends StreamOverlay {
   final Prize? next;
 }
 
-/// 13d – "comeu bola" (only with showFailsOnStream).
+/// 13d – rejected claim: "comeu bola" ([ClaimVerdict.missed]) or wrong
+/// pattern ([ClaimVerdict.wrongPattern]). Only with showFailsOnStream.
 final class MissedOverlay extends StreamOverlay {
   const MissedOverlay(this.claim);
   final Claim claim;
+
+  bool get wrongPattern => claim.verdict == ClaimVerdict.wrongPattern;
+}
+
+/// A valid claim whose player already holds a prize is choosing which one
+/// to keep ([ClaimStatus.awaitingChoice]).
+final class ChoosingOverlay extends StreamOverlay {
+  const ChoosingOverlay({required this.claim, required this.offered});
+  final Claim claim;
+  final Prize? offered;
+}
+
+/// Outcome of a choice: [swapped] (took [offered]) or kept the old prize.
+final class ChoiceOverlay extends StreamOverlay {
+  const ChoiceOverlay({
+    required this.claim,
+    required this.offered,
+    required this.swapped,
+  });
+  final Claim claim;
+  final Prize? offered;
+  final bool swapped;
 }
 
 /// 13e (winners == null) / 13f (winners decided).
@@ -104,10 +128,23 @@ class StreamController extends GameWatchController {
       _seen[c.id] = c.status;
       // Do not replay old results when the stream opens mid-game.
       if (first || g == null || before == c.status) continue;
-      if (c.status == ClaimStatus.confirmed) {
-        _onConfirmed(g, c, next);
+      if (c.status == ClaimStatus.pending && before == null) {
+        playBingoChime();
+      } else if (c.status == ClaimStatus.confirmed) {
+        if (before == ClaimStatus.awaitingChoice) {
+          _setFlash(
+            ChoiceOverlay(claim: c, offered: _offered(g, c), swapped: true),
+          );
+        } else {
+          _onConfirmed(g, c, next);
+        }
+      } else if (c.status == ClaimStatus.declined) {
+        _setFlash(
+          ChoiceOverlay(claim: c, offered: _offered(g, c), swapped: false),
+        );
       } else if (c.status == ClaimStatus.rejected &&
-          c.verdict == ClaimVerdict.missed &&
+          (c.verdict == ClaimVerdict.missed ||
+              c.verdict == ClaimVerdict.wrongPattern) &&
           g.settings.showFailsOnStream) {
         _setFlash(MissedOverlay(c));
       }
@@ -140,6 +177,8 @@ class StreamController extends GameWatchController {
       _setFlash(ValidOverlay(claim: c, prize: prize));
     }
   }
+
+  Prize? _offered(Game g, Claim c) => _prize(g, c.offerPrizeId ?? c.prizeId);
 
   Prize? _prize(Game g, PrizeId id) {
     for (final p in [...g.prizes, ...g.endOfGamePrizes]) {
@@ -186,7 +225,14 @@ class StreamController extends GameWatchController {
     final g = game;
     if (g == null) return null;
     final pending = pendingClaims;
-    if (pending.isEmpty) return null;
+    if (pending.isEmpty) {
+      for (final c in claims) {
+        if (c.status == ClaimStatus.awaitingChoice) {
+          return ChoosingOverlay(claim: c, offered: _offered(g, c));
+        }
+      }
+      return null;
+    }
     final first = ([
       ...pending,
     ]..sort((a, b) => a.createdAt.compareTo(b.createdAt))).first;

@@ -20,7 +20,9 @@ mixin _$Claim {
 /// local until a claim; the snapshot is what the host verifies).
  List<int> get markedCells; ClaimStatus get status; ClaimVerdict? get verdict; List<PatternMatch> get matched;/// Prize offered while awaiting a choice when it differs from [prizeId]
 /// (a prize passed on from a tie).
- PrizeId? get offerPrizeId; ClaimChoice? get choice; DateTime get createdAt;
+ PrizeId? get offerPrizeId;/// Legacy answer (keep = give up the offer, swap = give up the held one).
+ ClaimChoice? get choice;/// Player answer: the prize they give up (the offer or one they hold).
+ PrizeId? get releasePrizeId; DateTime get createdAt;
 /// Create a copy of Claim
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -32,20 +34,20 @@ $ClaimCopyWith<Claim> get copyWith => _$ClaimCopyWithImpl<Claim>(this as Claim, 
 @override
 bool operator ==(Object other) {
   final _this = this as Claim;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Claim&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.prizeId, _this.prizeId) || other.prizeId == _this.prizeId)&&(identical(other.drawIndex, _this.drawIndex) || other.drawIndex == _this.drawIndex)&&const DeepCollectionEquality().equals(other.markedCells, _this.markedCells)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.verdict, _this.verdict) || other.verdict == _this.verdict)&&const DeepCollectionEquality().equals(other.matched, _this.matched)&&(identical(other.offerPrizeId, _this.offerPrizeId) || other.offerPrizeId == _this.offerPrizeId)&&(identical(other.choice, _this.choice) || other.choice == _this.choice)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Claim&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.prizeId, _this.prizeId) || other.prizeId == _this.prizeId)&&(identical(other.drawIndex, _this.drawIndex) || other.drawIndex == _this.drawIndex)&&const DeepCollectionEquality().equals(other.markedCells, _this.markedCells)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.verdict, _this.verdict) || other.verdict == _this.verdict)&&const DeepCollectionEquality().equals(other.matched, _this.matched)&&(identical(other.offerPrizeId, _this.offerPrizeId) || other.offerPrizeId == _this.offerPrizeId)&&(identical(other.choice, _this.choice) || other.choice == _this.choice)&&(identical(other.releasePrizeId, _this.releasePrizeId) || other.releasePrizeId == _this.releasePrizeId)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Claim;
-  return Object.hash(runtimeType,_this.id,_this.uid,_this.prizeId,_this.drawIndex,const DeepCollectionEquality().hash(_this.markedCells),_this.status,_this.verdict,const DeepCollectionEquality().hash(_this.matched),_this.offerPrizeId,_this.choice,_this.createdAt);
+  return Object.hash(runtimeType,_this.id,_this.uid,_this.prizeId,_this.drawIndex,const DeepCollectionEquality().hash(_this.markedCells),_this.status,_this.verdict,const DeepCollectionEquality().hash(_this.matched),_this.offerPrizeId,_this.choice,_this.releasePrizeId,_this.createdAt);
 }
 
 @override
 String toString() {
   final _this = this as Claim;
-  return 'Claim(id: ${_this.id}, uid: ${_this.uid}, prizeId: ${_this.prizeId}, drawIndex: ${_this.drawIndex}, markedCells: ${_this.markedCells}, status: ${_this.status}, verdict: ${_this.verdict}, matched: ${_this.matched}, offerPrizeId: ${_this.offerPrizeId}, choice: ${_this.choice}, createdAt: ${_this.createdAt})';
+  return 'Claim(id: ${_this.id}, uid: ${_this.uid}, prizeId: ${_this.prizeId}, drawIndex: ${_this.drawIndex}, markedCells: ${_this.markedCells}, status: ${_this.status}, verdict: ${_this.verdict}, matched: ${_this.matched}, offerPrizeId: ${_this.offerPrizeId}, choice: ${_this.choice}, releasePrizeId: ${_this.releasePrizeId}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -56,7 +58,7 @@ abstract mixin class $ClaimCopyWith<$Res>  {
   factory $ClaimCopyWith(Claim value, $Res Function(Claim) _then) = _$ClaimCopyWithImpl;
 @useResult
 $Res call({
- ClaimId id, UserId uid, PrizeId prizeId, int drawIndex, List<int> markedCells, ClaimStatus status, ClaimVerdict? verdict, List<PatternMatch> matched, PrizeId? offerPrizeId, ClaimChoice? choice, DateTime createdAt
+ ClaimId id, UserId uid, PrizeId prizeId, int drawIndex, List<int> markedCells, ClaimStatus status, ClaimVerdict? verdict, List<PatternMatch> matched, PrizeId? offerPrizeId, ClaimChoice? choice, PrizeId? releasePrizeId, DateTime createdAt
 });
 
 
@@ -73,7 +75,7 @@ class _$ClaimCopyWithImpl<$Res>
 
 /// Create a copy of Claim
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? uid = null,Object? prizeId = null,Object? drawIndex = null,Object? markedCells = null,Object? status = null,Object? verdict = freezed,Object? matched = null,Object? offerPrizeId = freezed,Object? choice = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? uid = null,Object? prizeId = null,Object? drawIndex = null,Object? markedCells = null,Object? status = null,Object? verdict = freezed,Object? matched = null,Object? offerPrizeId = freezed,Object? choice = freezed,Object? releasePrizeId = freezed,Object? createdAt = null,}) {
   return _then(Claim(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as ClaimId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
@@ -85,7 +87,8 @@ as ClaimStatus,verdict: freezed == verdict ? _self.verdict : verdict // ignore: 
 as ClaimVerdict?,matched: null == matched ? _self.matched : matched // ignore: cast_nullable_to_non_nullable
 as List<PatternMatch>,offerPrizeId: freezed == offerPrizeId ? _self.offerPrizeId : offerPrizeId // ignore: cast_nullable_to_non_nullable
 as PrizeId?,choice: freezed == choice ? _self.choice : choice // ignore: cast_nullable_to_non_nullable
-as ClaimChoice?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as ClaimChoice?,releasePrizeId: freezed == releasePrizeId ? _self.releasePrizeId : releasePrizeId // ignore: cast_nullable_to_non_nullable
+as PrizeId?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -171,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  PrizeId? releasePrizeId,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Claim() when $default != null:
-return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.createdAt);case _:
+return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.releasePrizeId,_that.createdAt);case _:
   return orElse();
 
 }
@@ -192,10 +195,10 @@ return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCel
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  PrizeId? releasePrizeId,  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Claim():
-return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.createdAt);case _:
+return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.releasePrizeId,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +215,10 @@ return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCel
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ClaimId id,  UserId uid,  PrizeId prizeId,  int drawIndex,  List<int> markedCells,  ClaimStatus status,  ClaimVerdict? verdict,  List<PatternMatch> matched,  PrizeId? offerPrizeId,  ClaimChoice? choice,  PrizeId? releasePrizeId,  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Claim() when $default != null:
-return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.createdAt);case _:
+return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCells,_that.status,_that.verdict,_that.matched,_that.offerPrizeId,_that.choice,_that.releasePrizeId,_that.createdAt);case _:
   return null;
 
 }
@@ -227,7 +230,7 @@ return $default(_that.id,_that.uid,_that.prizeId,_that.drawIndex,_that.markedCel
 
 
 class _Claim implements Claim {
-  const _Claim({required this.id, required this.uid, required this.prizeId, required this.drawIndex,  List<int> markedCells = const <int>[], this.status = ClaimStatus.pending, this.verdict,  List<PatternMatch> matched = const <PatternMatch>[], this.offerPrizeId, this.choice, required this.createdAt}): _markedCells = markedCells,_matched = matched;
+  const _Claim({required this.id, required this.uid, required this.prizeId, required this.drawIndex,  List<int> markedCells = const <int>[], this.status = ClaimStatus.pending, this.verdict,  List<PatternMatch> matched = const <PatternMatch>[], this.offerPrizeId, this.choice, this.releasePrizeId, required this.createdAt}): _markedCells = markedCells,_matched = matched;
   
 
 @override final  ClaimId id;
@@ -258,7 +261,10 @@ class _Claim implements Claim {
 /// Prize offered while awaiting a choice when it differs from [prizeId]
 /// (a prize passed on from a tie).
 @override final  PrizeId? offerPrizeId;
+/// Legacy answer (keep = give up the offer, swap = give up the held one).
 @override final  ClaimChoice? choice;
+/// Player answer: the prize they give up (the offer or one they hold).
+@override final  PrizeId? releasePrizeId;
 @override final  DateTime createdAt;
 
 /// Create a copy of Claim
@@ -271,18 +277,18 @@ _$ClaimCopyWith<_Claim> get copyWith => __$ClaimCopyWithImpl<_Claim>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Claim&&(identical(other.id, id) || other.id == id)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.prizeId, prizeId) || other.prizeId == prizeId)&&(identical(other.drawIndex, drawIndex) || other.drawIndex == drawIndex)&&const DeepCollectionEquality().equals(other.markedCells, _markedCells)&&(identical(other.status, status) || other.status == status)&&(identical(other.verdict, verdict) || other.verdict == verdict)&&const DeepCollectionEquality().equals(other.matched, _matched)&&(identical(other.offerPrizeId, offerPrizeId) || other.offerPrizeId == offerPrizeId)&&(identical(other.choice, choice) || other.choice == choice)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Claim&&(identical(other.id, id) || other.id == id)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.prizeId, prizeId) || other.prizeId == prizeId)&&(identical(other.drawIndex, drawIndex) || other.drawIndex == drawIndex)&&const DeepCollectionEquality().equals(other.markedCells, _markedCells)&&(identical(other.status, status) || other.status == status)&&(identical(other.verdict, verdict) || other.verdict == verdict)&&const DeepCollectionEquality().equals(other.matched, _matched)&&(identical(other.offerPrizeId, offerPrizeId) || other.offerPrizeId == offerPrizeId)&&(identical(other.choice, choice) || other.choice == choice)&&(identical(other.releasePrizeId, releasePrizeId) || other.releasePrizeId == releasePrizeId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,uid,prizeId,drawIndex,const DeepCollectionEquality().hash(_markedCells),status,verdict,const DeepCollectionEquality().hash(_matched),offerPrizeId,choice,createdAt);
+    return Object.hash(runtimeType,id,uid,prizeId,drawIndex,const DeepCollectionEquality().hash(_markedCells),status,verdict,const DeepCollectionEquality().hash(_matched),offerPrizeId,choice,releasePrizeId,createdAt);
 }
 
 @override
 String toString() {
-    return 'Claim(id: $id, uid: $uid, prizeId: $prizeId, drawIndex: $drawIndex, markedCells: $markedCells, status: $status, verdict: $verdict, matched: $matched, offerPrizeId: $offerPrizeId, choice: $choice, createdAt: $createdAt)';
+    return 'Claim(id: $id, uid: $uid, prizeId: $prizeId, drawIndex: $drawIndex, markedCells: $markedCells, status: $status, verdict: $verdict, matched: $matched, offerPrizeId: $offerPrizeId, choice: $choice, releasePrizeId: $releasePrizeId, createdAt: $createdAt)';
 }
 
 
@@ -293,7 +299,7 @@ abstract mixin class _$ClaimCopyWith<$Res> implements $ClaimCopyWith<$Res> {
   factory _$ClaimCopyWith(_Claim value, $Res Function(_Claim) _then) = __$ClaimCopyWithImpl;
 @override @useResult
 $Res call({
- ClaimId id, UserId uid, PrizeId prizeId, int drawIndex, List<int> markedCells, ClaimStatus status, ClaimVerdict? verdict, List<PatternMatch> matched, PrizeId? offerPrizeId, ClaimChoice? choice, DateTime createdAt
+ ClaimId id, UserId uid, PrizeId prizeId, int drawIndex, List<int> markedCells, ClaimStatus status, ClaimVerdict? verdict, List<PatternMatch> matched, PrizeId? offerPrizeId, ClaimChoice? choice, PrizeId? releasePrizeId, DateTime createdAt
 });
 
 
@@ -310,7 +316,7 @@ class __$ClaimCopyWithImpl<$Res>
 
 /// Create a copy of Claim
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? uid = null,Object? prizeId = null,Object? drawIndex = null,Object? markedCells = null,Object? status = null,Object? verdict = freezed,Object? matched = null,Object? offerPrizeId = freezed,Object? choice = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? uid = null,Object? prizeId = null,Object? drawIndex = null,Object? markedCells = null,Object? status = null,Object? verdict = freezed,Object? matched = null,Object? offerPrizeId = freezed,Object? choice = freezed,Object? releasePrizeId = freezed,Object? createdAt = null,}) {
   return _then(_Claim(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as ClaimId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
@@ -322,7 +328,8 @@ as ClaimStatus,verdict: freezed == verdict ? _self.verdict : verdict // ignore: 
 as ClaimVerdict?,matched: null == matched ? _self._matched : matched // ignore: cast_nullable_to_non_nullable
 as List<PatternMatch>,offerPrizeId: freezed == offerPrizeId ? _self.offerPrizeId : offerPrizeId // ignore: cast_nullable_to_non_nullable
 as PrizeId?,choice: freezed == choice ? _self.choice : choice // ignore: cast_nullable_to_non_nullable
-as ClaimChoice?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as ClaimChoice?,releasePrizeId: freezed == releasePrizeId ? _self.releasePrizeId : releasePrizeId // ignore: cast_nullable_to_non_nullable
+as PrizeId?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

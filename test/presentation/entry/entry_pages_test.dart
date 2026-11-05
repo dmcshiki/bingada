@@ -32,14 +32,11 @@ void main() {
     await _pump(t, const LoginPage(code: RoomCode('K7QP')));
     expect(find.text('Entrar com Google'), findsOneWidget);
     expect(find.textContaining('como', findRichText: true), findsWidgets);
-    expect(find.text('Passo 1'), findsOneWidget);
     expect(find.text('Entre e pegue sua cartela'), findsOneWidget);
     expect(
       find.textContaining('@suaempresa.com.br', findRichText: true),
       findsOneWidget,
     );
-    await t.tap(find.text('Passo 3'));
-    await t.pump();
     expect(find.text('Carimbe você mesmo'), findsOneWidget);
   });
 

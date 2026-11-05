@@ -272,6 +272,7 @@ class ResultView extends StatelessWidget {
                     for (final (i, p, win) in sequential)
                       SizedBox(
                         width: w,
+                        height: 200,
                         child: _WinnerCard(
                           title: '${i + 1} · ${p.label.toUpperCase()}',
                           name: playerName(players, win.uid),
@@ -290,56 +291,55 @@ class ResultView extends StatelessWidget {
               },
             ),
           const SizedBox(height: 20),
-          IntrinsicHeight(
-            child: Flex(
-              direction: narrow ? Axis.vertical : Axis.horizontal,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (narrow)
-                  _UnderdogBox(
-                    game: game,
-                    players: players,
-                    cards: cards,
-                    underdogs: underdogs,
-                  )
-                else
-                  Expanded(
-                    child: _UnderdogBox(
+          if (game.endOfGamePrizes.isEmpty)
+            Align(
+              alignment: narrow ? Alignment.center : Alignment.centerRight,
+              child: SizedBox(
+                width: narrow ? double.infinity : 460,
+                child: _AuditBox(game: game, isHost: isHost),
+              ),
+            )
+          else
+            IntrinsicHeight(
+              child: Flex(
+                direction: narrow ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (narrow)
+                    _UnderdogBox(
                       game: game,
                       players: players,
                       cards: cards,
                       underdogs: underdogs,
+                    )
+                  else
+                    Expanded(
+                      child: _UnderdogBox(
+                        game: game,
+                        players: players,
+                        cards: cards,
+                        underdogs: underdogs,
+                      ),
                     ),
-                  ),
-                const SizedBox(width: 20, height: 20),
-                if (narrow)
-                  _AuditBox(game: game, isHost: isHost)
-                else
-                  SizedBox(
-                    width: 460,
-                    child: _AuditBox(game: game, isHost: isHost),
-                  ),
-              ],
+                  const SizedBox(width: 20, height: 20),
+                  if (narrow)
+                    _AuditBox(game: game, isHost: isHost)
+                  else
+                    SizedBox(
+                      width: 460,
+                      child: _AuditBox(game: game, isHost: isHost),
+                    ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
   String _how(Prize p, Winner w, {required bool ends}) {
-    final matched = [
-      for (final c in claims)
-        if (c.prizeId == p.id &&
-            c.uid == w.uid &&
-            c.status == ClaimStatus.confirmed)
-          ...c.matched,
-    ];
     final parts = [
-      if (matched.isEmpty)
-        modalityName(p)
-      else
-        describeMatches(matched, game.template, prize: p),
+      modalityName(p),
       ballOrdinal(w.drawIndex),
       if (w.tieBreak) 'venceu o desempate',
       if (ends) 'encerrou o jogo',
@@ -366,7 +366,12 @@ class _WinnerCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: _kicker(AppColors.navy)),
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _kicker(AppColors.navy),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -375,13 +380,20 @@ class _WinnerCard extends StatelessWidget {
             Expanded(
               child: Text(
                 name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: AppText.display(24, color: AppColors.graphite),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Text(how, style: AppText.body(14)),
+        Text(
+          how,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.body(14),
+        ),
       ],
     ),
   );
@@ -423,9 +435,7 @@ class _UnderdogBox extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: underdogs.isEmpty
           ? Text(
-              game.endOfGamePrizes.isEmpty
-                  ? 'Sem prêmio azarão nesta partida.'
-                  : 'Ninguém elegível para o azarão.',
+              'Ninguém elegível para o azarão.',
               style: AppText.body(15, color: AppColors.white),
             )
           : Column(
@@ -447,6 +457,7 @@ class _UnderdogBox extends StatelessWidget {
                                 ),
                                 size: 72,
                                 color: AppColors.pink,
+                                photoUrl: playerPhotos[w.uid],
                               ),
                             ),
                           ),

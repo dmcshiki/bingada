@@ -232,7 +232,11 @@ class _LobbyHeader extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AvatarToken(initials: u.initials, size: 36),
+                          AvatarToken(
+                            initials: u.initials,
+                            size: 36,
+                            photoUrl: u.photoUrl,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             narrow

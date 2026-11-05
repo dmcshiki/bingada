@@ -5,6 +5,7 @@ import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
 import 'package:tokingo/features/game/domain/services/bingo_verifier.dart';
+import 'package:tokingo/features/game/domain/services/prize_policy_evaluator.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
 import 'package:tokingo/features/game/presentation/common/game_watch_controller.dart';
 
@@ -33,6 +34,7 @@ class HostPanelController extends GameWatchController {
   @override
   void onGameChanged(Game? previous, Game next) {
     super.onGameChanged(previous, next);
+    _revealIfAutoAbandoned(next);
     final award = _awardUnderdog;
     if (award == null || _awarding) return;
     // Only when a ball was added and the game still has an open azarão.
@@ -46,6 +48,24 @@ class HostPanelController extends GameWatchController {
         // Retried on the next ball; EndGame also settles it at the end.
       } finally {
         _awarding = false;
+      }
+    }());
+  }
+
+  bool _revealing = false;
+
+  /// The game was auto-abandoned for inactivity (by any client): the host
+  /// device still holds the seed, so it reveals it for the audit.
+  void _revealIfAutoAbandoned(Game g) {
+    if (_revealing || g.status != GameStatus.abandoned || g.drawSeed != null) {
+      return;
+    }
+    _revealing = true;
+    unawaited(() async {
+      try {
+        await _endGame(g, status: GameStatus.abandoned);
+      } on Object {
+        // No seed on this device (another host browser): nothing to reveal.
       }
     }());
   }
@@ -208,7 +228,7 @@ class HostPanelController extends GameWatchController {
       final free = <Claim>[];
       for (final c in tied) {
         final r = results[c.id];
-        if (_heldBy(g, c.uid, except: c.prizeId) != null) {
+        if (_needsChoice(g, c.uid, c.prizeId)) {
           await _repoUpdate(
             g,
             _asValid(c, r, c.prizeId, ClaimStatus.awaitingChoice),
@@ -278,7 +298,7 @@ class HostPanelController extends GameWatchController {
   void onClaimsChanged(List<Claim> next, {required bool first}) {
     super.onClaimsChanged(next, first: first);
     for (final c in next) {
-      if (c.status != ClaimStatus.awaitingChoice || c.choice == null) continue;
+      if (c.status != ClaimStatus.awaitingChoice || !c.answered) continue;
       if (!_choosing.add(c.id)) continue;
       unawaited(
         _run(() => _applyChoice(c)).whenComplete(() => _choosing.remove(c.id)),
@@ -291,13 +311,17 @@ class HostPanelController extends GameWatchController {
     return await repository.getGame(g.id) ?? g;
   }
 
-  /// The prize [uid] already holds, other than [except].
-  static Winner? _heldBy(Game g, UserId uid, {required PrizeId except}) {
-    for (final w in g.winners) {
-      if (w.uid == uid && w.prizeId != except) return w;
-    }
-    return null;
-  }
+  static const _policy = PrizePolicyEvaluator();
+
+  /// Winning [prize] would exceed the room's limit for [uid] (count or the
+  /// "who won X may compete for Y" matrix), so they must give one up.
+  static bool _needsChoice(Game g, UserId uid, PrizeId prize) => _policy
+      .releaseOptions(
+        held: _policy.heldBy(uid, g.winners, except: prize),
+        offer: prize,
+        policy: g.prizePolicy,
+      )
+      .isNotEmpty;
 
   Claim _asValid(Claim c, ClaimResult? r, PrizeId prize, ClaimStatus status) =>
       c.copyWith(
@@ -307,8 +331,8 @@ class HostPanelController extends GameWatchController {
         offerPrizeId: prize == c.prizeId ? null : prize,
       );
 
-  /// Gives [prize] to the player of [c]. Someone who already holds a prize
-  /// is asked first (`awaitingChoice`); [_applyChoice] continues from there.
+  /// Gives [prize] to the player of [c]. When that would exceed the room's
+  /// limit they are asked first (`awaitingChoice`); [_applyChoice] continues.
   Future<void> _award(
     Claim c,
     ClaimResult? r,
@@ -316,7 +340,7 @@ class HostPanelController extends GameWatchController {
     bool tieBreak = false,
   }) async {
     final g = await _fresh();
-    if (_heldBy(g, c.uid, except: prize) != null) {
+    if (_needsChoice(g, c.uid, prize)) {
       await _repoUpdate(g, _asValid(c, r, prize, ClaimStatus.awaitingChoice));
       return;
     }
@@ -337,7 +361,28 @@ class HostPanelController extends GameWatchController {
   Future<void> _applyChoice(Claim c) async {
     final g = await _fresh();
     final offer = c.offerPrizeId ?? c.prizeId;
-    final held = _heldBy(g, c.uid, except: offer);
+    final heldIds = _policy.heldBy(c.uid, g.winners, except: offer);
+    // The prize given up: explicit answer, or the legacy keep/swap.
+    var release = c.releasePrizeId;
+    if (release == null && c.choice == ClaimChoice.swap) {
+      final options = _policy.releaseOptions(
+        held: heldIds,
+        offer: offer,
+        policy: g.prizePolicy,
+      );
+      release = options.firstWhere((p) => p != offer, orElse: () => offer);
+      if (release == offer && heldIds.isNotEmpty) release = heldIds.first;
+    }
+    release ??= offer;
+    Winner? held;
+    if (release != offer) {
+      for (final w in g.winners) {
+        if (w.uid == c.uid && w.prizeId == release) {
+          held = w;
+          break;
+        }
+      }
+    }
     final pool = [
       for (final o in claims)
         if (o.id != c.id &&
@@ -348,7 +393,7 @@ class HostPanelController extends GameWatchController {
     final tie =
         pool.isNotEmpty || g.winnersOf(c.prizeId).any((w) => w.tieBreak);
     PrizeId released;
-    if (c.choice == ClaimChoice.swap || held == null) {
+    if (release != offer) {
       await repository.setWinners(g.id, [
         for (final w in g.winners)
           if (w != held) w,
@@ -389,10 +434,30 @@ class HostPanelController extends GameWatchController {
 
   Future<void> _repoUpdate(Game g, Claim c) => repository.updateClaim(g.id, c);
 
-  /// 11c → abandoned.
+  /// Why the host cannot end the game early right now (null = allowed).
+  String? get endBlockedReason {
+    final g = game;
+    if (g == null) return 'Carregando…';
+    if (isFinished) return 'A partida já terminou';
+    if (pendingClaims.isNotEmpty) {
+      return 'Confira os pedidos de BINGO antes de encerrar o jogo';
+    }
+    if (claims.any((c) => c.status == ClaimStatus.awaitingChoice)) {
+      return 'Aguarde o ganhador escolher qual prêmio fica antes de encerrar';
+    }
+    return null;
+  }
+
+  /// 11c → abandoned. Blocked while claims wait (see [endBlockedReason]).
   Future<bool> endEarly() async {
     final g = game;
     if (g == null) return false;
+    final blocked = endBlockedReason;
+    if (blocked != null) {
+      actionError = blocked;
+      super.notifyListeners();
+      return false;
+    }
     return await _run(() => _endGame(g, status: GameStatus.abandoned));
   }
 }

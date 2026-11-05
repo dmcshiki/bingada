@@ -6,6 +6,7 @@ import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
+import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
 
 /// Resolves a room code and keeps the game, players and claims live.
 ///
@@ -52,12 +53,14 @@ class GameWatchController extends ChangeNotifier {
       }
       game = found;
       loading = false;
+      _scheduleIdle(found);
       notifyListeners();
       _subs
         ..add(_repo.watchGame(found.id).listen(_onGame, onError: _onError))
         ..add(
           _repo.watchPlayers(found.id).listen((p) {
             players = p;
+            rememberPlayerPhotos(p);
             notifyListeners();
           }, onError: _onError),
         )
@@ -100,8 +103,44 @@ class GameWatchController extends ChangeNotifier {
   void _onGame(Game g) {
     final prev = game;
     game = g;
+    _scheduleIdle(g);
     onGameChanged(prev, g);
     notifyListeners();
+  }
+
+  Timer? _idleTimer;
+
+  /// Clock of this client (overridable in tests).
+  @protected
+  DateTime now() => DateTime.now().toUtc();
+
+  /// Ends the game as abandoned after [Game.idleLimit] without activity.
+  /// No server runs this: every client watching (or opening) the game does,
+  /// and the rules accept it only once the hour has really passed.
+  void _scheduleIdle(Game g, {Duration slack = const Duration(seconds: 5)}) {
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    final deadline = g.idleDeadline;
+    if (deadline == null || _disposed) return;
+    var wait = deadline.toUtc().difference(now()) + slack;
+    if (wait.isNegative) wait = Duration.zero;
+    _idleTimer = Timer(wait, () => unawaited(_endIdle(g.id)));
+  }
+
+  Future<void> _endIdle(GameId id) async {
+    if (_disposed) return;
+    final g = game;
+    if (g == null || g.id != id || g.idleDeadline == null) return;
+    try {
+      await _repo.abandonIdle(id);
+    } on Object {
+      // Clock skew or a race with real activity: try again in a minute.
+      if (_disposed) return;
+      _idleTimer = Timer(
+        const Duration(minutes: 1),
+        () => unawaited(_endIdle(id)),
+      );
+    }
   }
 
   void _onError(Object e) {
@@ -127,6 +166,7 @@ class GameWatchController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _idleTimer?.cancel();
     for (final s in _subs) {
       unawaited(s.cancel());
     }

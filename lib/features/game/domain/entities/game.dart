@@ -94,7 +94,23 @@ abstract class Game with _$Game {
     required DateTime createdAt,
     DateTime? startedAt,
     DateTime? endedAt,
+
+    /// Last host/player action (draw, claim, confirmation). Drives the
+    /// automatic end after [idleLimit] without activity.
+    DateTime? lastActivityAt,
   }) = _Game;
+
+  /// A lobby/running game with no activity for this long ends as abandoned.
+  static const idleLimit = Duration(hours: 1);
+
+  /// Last activity, falling back to start/creation for old games.
+  DateTime get lastActivity => lastActivityAt ?? startedAt ?? createdAt;
+
+  /// When the game may be auto-abandoned (null once it is over).
+  DateTime? get idleDeadline =>
+      status == GameStatus.lobby || status == GameStatus.running
+      ? lastActivity.add(idleLimit)
+      : null;
 
   bool isWon(PrizeId id) => winners.any((w) => w.prizeId == id);
 

@@ -48,9 +48,19 @@ abstract class Claim with _$Claim {
     /// Prize offered while awaiting a choice when it differs from [prizeId]
     /// (a prize passed on from a tie).
     PrizeId? offerPrizeId,
+
+    /// Legacy answer (keep = give up the offer, swap = give up the held one).
     ClaimChoice? choice,
+
+    /// Player answer: the prize they give up (the offer or one they hold).
+    PrizeId? releasePrizeId,
     required DateTime createdAt,
   }) = _Claim;
+}
+
+extension ClaimX on Claim {
+  /// The player already answered an `awaitingChoice`.
+  bool get answered => choice != null || releasePrizeId != null;
 }
 
 /// What the verifier says about a claim.

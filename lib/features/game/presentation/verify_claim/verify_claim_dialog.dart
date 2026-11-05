@@ -418,7 +418,6 @@ class _VerifyInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = game.template;
     final prize = prizeById(game, claim.prizeId);
-    final current = game.currentPrize;
     final r = result;
     final kind = r == null
         ? 'conferindo…'
@@ -436,10 +435,9 @@ class _VerifyInfo extends StatelessWidget {
     final vSub = r == null
         ? 'Recalculando a cartela e as bolas até o grito.'
         : ok
-        ? '$kind completa na bola nº ${claim.drawIndex}.'
+        ? '$kind completa com as ${claim.drawIndex} bolas que tinham saído.'
         : r.reason;
     final tampered = r?.verdict == ClaimVerdict.tampered;
-    final current_ = current;
     final ballNow = game.currentBall == null
         ? ''
         : ' ${t.ballText(game.currentBall!)}';
@@ -487,7 +485,7 @@ class _VerifyInfo extends StatelessWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: Pill(
-            label: 'Tipo detectado: $kind',
+            label: 'Padrão encontrado: $kind',
             color: AppColors.light,
             bold: true,
           ),
@@ -517,24 +515,29 @@ class _VerifyInfo extends StatelessWidget {
         const SizedBox(height: 22),
         _CheckRow(
           ok: !tampered,
-          text: 'Cartela confere com a seed (uid + jogo + salt)',
+          text: tampered
+              ? 'A cartela não é a que o sistema gerou para este jogador'
+              : 'A cartela é a mesma que o sistema gerou para este jogador',
         ),
         _CheckRow(
           ok: ok,
-          text: ok
-              ? 'Modalidade do prêmio atual: ${current_ == null ? '—' : modalityName(current_)}'
-              : 'Modalidade do prêmio atual (${current_ == null ? '—' : modalityName(current_)}) não fechou',
+          text: prize == null
+              ? 'Prêmio do grito não encontrado'
+              : ok
+              ? 'Prêmio do grito: ${prize.label} (${modalityName(prize)}) completo'
+              : 'Prêmio do grito: ${prize.label} (${modalityName(prize)}) não completou',
         ),
         _CheckRow(
           ok: true,
           text:
-              'Validado com as ${claim.drawIndex} bolas sorteadas até o grito',
+              'Conferido com as ${claim.drawIndex} bolas que tinham saído quando gritou',
         ),
         const SizedBox(height: 22),
         if (others.isEmpty || !ok) ...[
           Text(
-            'Janela de gritos da bola$ballNow: aberta até você sortear a próxima. '
-            '${ok ? 'Nenhum outro grito válido até agora.' : ''}',
+            ok
+                ? 'Outros jogadores ainda podem gritar BINGO nesta bola$ballNow até você sortear a próxima. Por enquanto, ninguém mais gritou.'
+                : 'Outros jogadores ainda podem gritar BINGO nesta bola$ballNow até você sortear a próxima.',
             style: AppText.body(13),
           ),
           const SizedBox(height: 10),

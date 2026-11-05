@@ -357,11 +357,20 @@ class _LimitCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const SizedBox(width: 112),
+                const SizedBox(width: 140),
                 for (final t in cols) ...[
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(t, textAlign: TextAlign.center, style: bold12),
+                    child: Tooltip(
+                      message: t,
+                      child: Text(
+                        t,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: bold12,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -371,10 +380,15 @@ class _LimitCard extends StatelessWidget {
               Row(
                 children: [
                   SizedBox(
-                    width: 112,
-                    child: Text(
-                      c.rowLabel(r),
-                      style: AppText.body(13, weight: FontWeight.w700),
+                    width: 140,
+                    child: Tooltip(
+                      message: c.rowLabel(r),
+                      child: Text(
+                        c.rowLabel(r),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.body(13, weight: FontWeight.w700),
+                      ),
                     ),
                   ),
                   for (var k = 0; k < cols.length; k++) ...[

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:tokingo/core/di/injection.dart';
@@ -14,8 +15,10 @@ import 'package:tokingo/features/game/domain/services/bingo_verifier.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
 import 'package:tokingo/features/game/presentation/common/game_format.dart';
 import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
-import 'package:tokingo/features/game/presentation/common/tie_player_card.dart';
 import 'package:tokingo/features/stream/presentation/stream_controller.dart';
+import 'package:tokingo/features/stream/presentation/stream_end.dart';
+import 'package:tokingo/features/stream/presentation/stream_fx.dart';
+import 'package:tokingo/features/stream/presentation/stream_tie_reveal.dart';
 
 /// 13 – streamer screen. Read-only composition: there is no admin control
 /// here, not even hidden (R6, §3.2). No ball count (R23), no QR (R24).
@@ -124,7 +127,12 @@ class _StreamPageState extends State<StreamPage> {
             Positioned.fill(
               child: SafeArea(
                 child: _c.isFinished
-                    ? StreamFinished(game: g, players: _c.players)
+                    ? StreamEnd(
+                        game: g,
+                        players: _c.players,
+                        claims: _c.claims,
+                        chroma: widget.chroma,
+                      )
                     : _StreamBoard(
                         game: g,
                         players: _c.players,
@@ -153,116 +161,92 @@ class _StreamBoard extends StatelessWidget {
   final List<Player> players;
   final bool compact;
 
+  /// Design canvas of the wide layout; it is scaled to fit the viewport.
+  static const _canvas = Size(1600, 900);
+
+  /// Below this width (phones) the stream falls back to a scrolling column.
+  static const _minWideWidth = 700.0;
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
-      final wide = !compact && box.maxWidth >= 1100;
-      // Scale everything from the 1600px-wide canvas.
-      final scale = wide ? (box.maxWidth / 1600).clamp(.7, 1.4) : 1.0;
-      final board = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'tokingo',
-            style: AppText.display(30 * scale, color: AppColors.white),
-          ),
-          SizedBox(height: 16 * scale),
-          PoolBoard(
-            template: game.template,
-            drawn: game.draws.toSet(),
-            dark: true,
-            cellHeight: (wide ? 40 : 30) * scale,
-          ),
-        ],
+      final wordmark = Text(
+        'tokingo',
+        style: AppText.display(30, color: AppColors.white),
       );
-      final ball = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SplitTitle('bola', 'atual', size: 22 * scale, color: AppColors.white),
-          SizedBox(height: 28 * scale),
-          BallToken(
-            template: game.template,
-            ball: game.currentBall,
-            size: (wide ? 380 : 220) * scale,
-          ),
-        ],
-      );
-      final last = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _LastBalls(game: game, scale: scale),
-          SizedBox(height: 28 * scale),
-          _StreamPrizes(game: game, players: players, scale: scale),
-        ],
-      );
-      final footer = _StreamFooter(game: game, scale: scale);
-      if (compact) {
+      if (compact || box.maxWidth < _minWideWidth) {
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ball,
+              if (!compact) ...[wordmark, const SizedBox(height: 16)],
+              _ball(220),
               const SizedBox(height: 24),
-              last,
+              _last(),
               const SizedBox(height: 24),
-              footer,
+              _StreamFooter(game: game, scale: 1),
             ],
           ),
         );
       }
-      if (!wide) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ball,
-              const SizedBox(height: 24),
-              last,
-              const SizedBox(height: 24),
-              board,
-              const SizedBox(height: 24),
-              footer,
-            ],
-          ),
-        );
-      }
-      return Padding(
-        padding: EdgeInsets.fromLTRB(
-          48 * scale,
-          40 * scale,
-          48 * scale,
-          28 * scale,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 520 * scale,
-                    child: SingleChildScrollView(child: board),
+      // Lay out at the design size (stretched to the viewport's aspect ratio)
+      // and scale the whole thing down/up to fit both width and height.
+      final s = math.min(
+        box.maxWidth / _canvas.width,
+        box.maxHeight / _canvas.height,
+      );
+      final logical = Size(box.maxWidth / s, box.maxHeight / s);
+      return FittedBox(
+        child: SizedBox.fromSize(
+          size: logical,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(48, 40, 48, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                wordmark,
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _ball(400)),
+                      const SizedBox(width: 48),
+                      SizedBox(
+                        width: 480,
+                        child: SingleChildScrollView(child: _last()),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 32 * scale),
-                  Expanded(child: ball),
-                  SizedBox(width: 32 * scale),
-                  SizedBox(
-                    width: 400 * scale,
-                    child: SingleChildScrollView(child: last),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                _StreamFooter(game: game, scale: 1),
+              ],
             ),
-            SizedBox(height: 20 * scale),
-            footer,
-          ],
+          ),
         ),
       );
     },
+  );
+
+  Widget _ball(double size) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const SplitTitle('bola', 'atual', size: 22, color: AppColors.white),
+      const SizedBox(height: 28),
+      BallToken(template: game.template, ball: game.currentBall, size: size),
+    ],
+  );
+
+  Widget _last() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _LastBalls(game: game, scale: 1),
+      const SizedBox(height: 28),
+      _StreamPrizes(game: game, players: players, scale: 1),
+    ],
   );
 }
 
@@ -274,7 +258,8 @@ class _LastBalls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = game.draws.reversed.skip(1).take(5).toList();
+    final recent = game.draws.reversed.take(3).toList();
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -288,42 +273,91 @@ class _LastBalls extends StatelessWidget {
           ),
         ),
         SizedBox(height: 12 * scale),
-        Semantics(
-          label: recent.isEmpty
-              ? 'Nenhuma bola anterior'
-              : 'Últimas bolas: ${recent.map(game.template.ballText).join(', ')}',
-          child: ExcludeSemantics(
-            child: Wrap(
-              spacing: 10 * scale,
-              runSpacing: 10 * scale,
+        if (recent.isEmpty)
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 18 * scale,
+              vertical: 16 * scale,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: .1),
+              borderRadius: BorderRadius.circular(18 * scale),
+            ),
+            child: Row(
               children: [
-                for (final id in recent)
-                  Container(
-                    width: 68 * scale,
-                    height: 68 * scale,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(18 * scale),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: FittedBox(
-                        child: Text(
-                          game.template.ballShort(id),
-                          style: AppText.display(
-                            20 * scale,
-                            color: AppColors.navy,
-                          ),
-                        ),
-                      ),
+                LoadingDots(
+                  dotSize: 10 * scale,
+                  semanticLabel: 'Aguardando a primeira bola',
+                ),
+                SizedBox(width: 14 * scale),
+                Expanded(
+                  child: ExcludeSemantics(
+                    child: Text(
+                      'aguardando a primeira bola',
+                      style: AppText.body(17 * scale, color: AppColors.white),
                     ),
                   ),
+                ),
               ],
+            ),
+          )
+        else
+          Semantics(
+            label:
+                'Últimas bolas: ${recent.map(game.template.ballText).join(', ')}',
+            child: ExcludeSemantics(
+              child: Wrap(
+                spacing: 14 * scale,
+                runSpacing: 10 * scale,
+                children: [
+                  for (final (i, id) in recent.indexed)
+                    AnimatedSwitcher(
+                      duration: Duration(milliseconds: reduce ? 150 : 380),
+                      transitionBuilder: (child, anim) => reduce
+                          ? FadeTransition(opacity: anim, child: child)
+                          : ScaleTransition(
+                              scale: anim,
+                              child: FadeTransition(
+                                opacity: anim,
+                                child: child,
+                              ),
+                            ),
+                      child: _ballChip(id, (i == 0 ? 92 : 72) * scale),
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+extension on _LastBalls {
+  Widget _ballChip(ItemId id, double size) {
+    final color = game.template.columnColor(id.column);
+    return SizedBox(
+      key: ValueKey(id.value),
+      width: size * 1.1,
+      height: size * 1.1,
+      child: Center(
+        child: TokenBox(
+          size: size,
+          color: color,
+          child: Padding(
+            padding: EdgeInsets.all(size * .1),
+            child: FittedBox(
+              child: Text(
+                game.template.ballShort(id),
+                style: AppText.display(
+                  size * .32,
+                  color: AppColors.onColor(color),
+                ),
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -418,26 +452,65 @@ class _StreamOverlayView extends StatelessWidget {
       text: '${_valendo(game.currentPrize)} Segura o carimbo aí.',
     ),
     ValidOverlay(:final claim, :final prize) => _OneOverlay(
+      key: ValueKey('valid-${claim.id.value}'),
       kicker: 'BINGO!',
       name: playerName(players, claim.uid),
       uid: claim.uid,
-      badge:
-          'VÁLIDO · ${describeMatches(claim.matched, game.template, prize: prize)}',
+      badge: [
+        'VÁLIDO',
+        if (prize != null) modalityName(prize).toUpperCase(),
+        ballOrdinal(claim.drawIndex).toUpperCase(),
+      ].join(' · '),
       badgeBg: AppColors.greenDark,
       badgeFg: AppColors.white,
       text: 'Levou a ${prize?.label ?? ''}. ${_next(game)}',
+      celebrate: true,
     ),
-    MissedOverlay(:final claim) => _OneOverlay(
+    MissedOverlay(:final claim, :final wrongPattern) => _OneOverlay(
+      key: ValueKey('missed-${claim.id.value}'),
       kicker: 'BINGO?',
       name: playerName(players, claim.uid),
       uid: claim.uid,
-      badge: 'COMEU BOLA',
+      badge: wrongPattern ? 'PADRÃO ERRADO' : 'COMEU BOLA',
       badgeBg: AppColors.purple,
       badgeFg: AppColors.white,
       text:
-          'Marcou bola que ainda não saiu. O jogo continua valendo a ${game.currentPrize?.label ?? ''}.',
+          '${wrongPattern ? 'O desenho marcado não fecha o prêmio que está valendo.' : 'Marcou bola que ainda não saiu.'} '
+          'O jogo continua valendo a ${game.currentPrize?.label ?? ''}.',
+      shake: true,
+    ),
+    ChoosingOverlay(:final claim, :final offered) => _OneOverlay(
+      key: ValueKey('choosing-${claim.id.value}'),
+      kicker: 'BINGO!',
+      name: playerName(players, claim.uid),
+      uid: claim.uid,
+      badge: 'ESTÁ ESCOLHENDO…',
+      badgeBg: AppColors.light,
+      badgeFg: AppColors.navy,
+      text:
+          '${playerName(players, claim.uid)} está escolhendo qual prêmio fica: '
+          'o que já tem ou ${offered == null ? 'o novo' : 'a ${offered.label}'}.',
+    ),
+    ChoiceOverlay(:final claim, :final offered, :final swapped) => _OneOverlay(
+      key: ValueKey('choice-${claim.id.value}'),
+      kicker: swapped ? 'TROCOU!' : 'FICOU COM O SEU!',
+      name: playerName(players, claim.uid),
+      uid: claim.uid,
+      badge: swapped
+          ? 'LEVOU A ${offered?.label.toUpperCase() ?? ''}'
+          : 'MANTEVE O PRÊMIO',
+      badgeBg: swapped ? AppColors.greenDark : AppColors.pink,
+      badgeFg: swapped ? AppColors.white : AppColors.navy,
+      text: swapped
+          ? 'Trocou pelo novo prêmio. ${_next(game)}'
+          : 'Preferiu o prêmio que já tinha. '
+                '${offered == null ? '' : 'A ${offered.label} segue no jogo. '}'
+                '${_next(game)}',
+      celebrate: swapped,
     ),
     UnderdogOverlay(:final prize, :final winners) => _OneOverlay(
+      key: ValueKey('underdog-${prize.id.value}'),
+      celebrate: true,
       kicker: 'AZARÃO!',
       name: winners.map((w) => playerName(players, w.uid)).join(' e '),
       uid: winners.first.uid,
@@ -450,11 +523,13 @@ class _StreamOverlayView extends StatelessWidget {
           '${game.currentPrize?.label ?? ''}.',
     ),
     TieOverlay(:final tied, :final prize, :final winners) => _TieOverlay(
+      key: ValueKey('tie-${prize?.id.value}-${tied.first.drawIndex}'),
       game: game,
       players: players,
       tied: tied.map((c) => c.uid).toList(),
       prize: prize,
       winners: winners,
+      drawIndex: tied.first.drawIndex,
     ),
   };
 
@@ -471,6 +546,9 @@ class _StreamOverlayView extends StatelessWidget {
 
 class _OneOverlay extends StatelessWidget {
   const _OneOverlay({
+    super.key,
+    this.celebrate = false,
+    this.shake = false,
     required this.kicker,
     required this.name,
     required this.uid,
@@ -488,9 +566,16 @@ class _OneOverlay extends StatelessWidget {
   final Color badgeFg;
   final String text;
 
+  /// Winner celebration: token burst behind the card.
+  final bool celebrate;
+
+  /// Failed claim: a short "no" wobble on entry.
+  final bool shake;
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
+    final reduce = MediaQuery.disableAnimationsOf(context);
     final info = Column(
       crossAxisAlignment: wide
           ? CrossAxisAlignment.start
@@ -521,42 +606,66 @@ class _OneOverlay extends StatelessWidget {
         Text(text, style: AppText.body(20, height: 1.4)),
       ],
     );
+    Widget card = DialogCard(
+      semanticLabel: '$kicker $name: $badge',
+      maxWidth: 920,
+      padding: const EdgeInsets.all(48),
+      child: wide
+          ? Row(
+              children: [
+                NameToken(name: name, uid: uid, size: 200),
+                const SizedBox(width: 40),
+                Expanded(child: info),
+              ],
+            )
+          : Column(
+              children: [
+                NameToken(name: name, uid: uid, size: 120),
+                const SizedBox(height: 20),
+                info,
+              ],
+            ),
+    );
+    final shaker = shake && !reduce;
+    card = TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: shaker ? 700 : 1),
+      builder: (context, t, child) => Transform.translate(
+        offset: Offset(
+          shaker ? math.sin(t * math.pi * 6) * 18 * (1 - t) : 0,
+          0,
+        ),
+        child: child,
+      ),
+      child: card,
+    );
     return ScrimOverlay(
       color: const Color(0xD1142840),
       child: Semantics(
         liveRegion: true,
-        child: DialogCard(
-          semanticLabel: '$kicker $name: $badge',
-          maxWidth: 920,
-          padding: const EdgeInsets.all(48),
-          child: wide
-              ? Row(
-                  children: [
-                    NameToken(name: name, uid: uid, size: 200),
-                    const SizedBox(width: 40),
-                    Expanded(child: info),
-                  ],
-                )
-              : Column(
-                  children: [
-                    NameToken(name: name, uid: uid, size: 120),
-                    const SizedBox(height: 20),
-                    info,
-                  ],
-                ),
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            if (celebrate)
+              const Positioned.fill(child: TokenBurst(radius: 520, count: 40)),
+            PopIn(child: card),
+          ],
         ),
       ),
     );
   }
 }
 
-class _TieOverlay extends StatelessWidget {
+class _TieOverlay extends StatefulWidget {
   const _TieOverlay({
+    super.key,
     required this.game,
     required this.players,
     required this.tied,
     required this.prize,
     required this.winners,
+    required this.drawIndex,
   });
 
   final Game game;
@@ -564,12 +673,25 @@ class _TieOverlay extends StatelessWidget {
   final List<UserId> tied;
   final Prize? prize;
   final Set<UserId>? winners;
+  final int drawIndex;
+
+  @override
+  State<_TieOverlay> createState() => _TieOverlayState();
+}
+
+class _TieOverlayState extends State<_TieOverlay> {
+  bool _revealed = false;
 
   @override
   Widget build(BuildContext context) {
-    final w = winners;
-    final done = w != null;
-    final next = game.currentPrize;
+    final prize = widget.prize;
+    final w = widget.winners;
+    final done = w != null && _revealed;
+    final next = widget.game.currentPrize;
+    final names = [
+      for (final uid in widget.tied)
+        if (w?.contains(uid) ?? false) playerName(widget.players, uid),
+    ].join(' e ');
     return ScrimOverlay(
       color: const Color(0xE0142840),
       child: Semantics(
@@ -589,7 +711,7 @@ class _TieOverlay extends StatelessWidget {
                 ),
                 child: Text(
                   'EMPATE · ${prize?.label.toUpperCase() ?? ''} · '
-                  '${prize == null ? '' : modalityName(prize!).toUpperCase()} · NA MESMA BOLA',
+                  '${prize == null ? '' : modalityName(prize).toUpperCase()} · NA MESMA BOLA',
                   textAlign: TextAlign.center,
                   style: AppText.body(
                     18,
@@ -601,30 +723,37 @@ class _TieOverlay extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 28),
-            EllipsisText(
-              done ? 'Desempate decidido!' : 'Sorteando o desempate…',
-              textAlign: TextAlign.center,
-              style: AppText.display(56, color: AppColors.white),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: done
+                  ? PopIn(
+                      key: const ValueKey('done'),
+                      child: Text(
+                        '$names levou!',
+                        textAlign: TextAlign.center,
+                        style: AppText.display(56, color: AppColors.white),
+                      ),
+                    )
+                  : EllipsisText(
+                      key: const ValueKey('drawing'),
+                      'Sorteando o desempate…',
+                      textAlign: TextAlign.center,
+                      style: AppText.display(56, color: AppColors.white),
+                    ),
             ),
             const SizedBox(height: 28),
-            Wrap(
-              spacing: 56,
-              runSpacing: 24,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final uid in tied)
-                  TiePlayerCard(
-                    name: playerName(players, uid),
-                    uid: uid,
-                    width: 400,
-                    winnerTag: 'LEVOU A ${prize?.label.toUpperCase() ?? ''}',
-                    state: !done
-                        ? TieCardState.pending
-                        : w.contains(uid)
-                        ? TieCardState.winner
-                        : TieCardState.loser,
-                  ),
-              ],
+            TieReveal(
+              tied: widget.tied,
+              players: widget.players,
+              winners: w,
+              how: [
+                if (prize != null) modalityName(prize),
+                ballOrdinal(widget.drawIndex),
+              ].join(' · '),
+              winnerTag: 'LEVOU A ${prize?.label.toUpperCase() ?? ''}',
+              onRevealed: () {
+                if (mounted) setState(() => _revealed = true);
+              },
             ),
             const SizedBox(height: 28),
             Text(
@@ -635,77 +764,6 @@ class _TieOverlay extends StatelessWidget {
                   : 'Ninguém escolhe, nem o host: o sistema sorteia.',
               textAlign: TextAlign.center,
               style: AppText.body(20, color: AppColors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Summary shown on the stream once the game is over (read-only).
-class StreamFinished extends StatelessWidget {
-  const StreamFinished({required this.game, required this.players, super.key});
-
-  final Game game;
-  final List<Player> players;
-
-  @override
-  Widget build(BuildContext context) {
-    final all = [...game.prizes, ...game.endOfGamePrizes];
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            SplitTitle(
-              'fim de',
-              game.status == GameStatus.abandoned
-                  ? 'jogo (encerrado pelo host)'
-                  : 'jogo!',
-              size: 56,
-              color: AppColors.white,
-            ),
-            const SizedBox(height: 32),
-            Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final p in all)
-                  for (final w in game.winners.where((w) => w.prizeId == p.id))
-                    SizedBox(
-                      width: 360,
-                      child: SectionCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p.label.toUpperCase(),
-                              style: AppText.kicker(color: AppColors.navy),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                NameToken(
-                                  name: playerName(players, w.uid),
-                                  uid: w.uid,
-                                  size: 56,
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Text(
-                                    playerName(players, w.uid),
-                                    style: AppText.display(22),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-              ],
             ),
           ],
         ),

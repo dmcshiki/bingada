@@ -1,1 +1,16 @@
-{"name":"Tokingo","short_name":"Tokingo","start_url":".","display":"standalone","background_color":"#e6e9e9","theme_color":"#204a77","description":"Bingo web multijogador, open source e auditável.","icons":[]}
+{
+  "name": "Tokingo",
+  "short_name": "Tokingo",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#e6e9e9",
+  "theme_color": "#204a77",
+  "description": "Bingo web multijogador, open source e auditável.",
+  "icons": [
+    {"src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/Icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/Icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "favicon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
