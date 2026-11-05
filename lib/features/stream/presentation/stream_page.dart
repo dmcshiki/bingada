@@ -524,12 +524,31 @@ class _StreamOverlayView extends StatelessWidget {
       kicker: 'BINGO!',
       name: playerName(players, claim.uid),
       uid: claim.uid,
-      badge: 'ESTÁ ESCOLHENDO…',
+      badge: claim.tieOptIn ? 'EMPATE · DECIDINDO…' : 'ESTÁ ESCOLHENDO…',
       badgeBg: AppColors.light,
       badgeFg: AppColors.navy,
-      text:
-          '${playerName(players, claim.uid)} está escolhendo qual prêmio fica: '
-          'o que já tem ou ${offered == null ? 'o novo' : 'a ${offered.label}'}.',
+      text: claim.tieOptIn
+          ? '${playerName(players, claim.uid)} empatou, mas já está no limite '
+                'de prêmios: está decidindo se entra no sorteio ou deixa para '
+                'quem bingou junto.'
+          : '${playerName(players, claim.uid)} passou do limite de prêmios e '
+                'está escolhendo com quais fica'
+                '${offered == null ? '' : ' (acabou de ganhar ${offered.label})'}.',
+    ),
+    RaffleOverlay(:final raffle) => _TieOverlay(
+      key: ValueKey(
+        'raffle-${raffle.prizeId.value}-${raffle.candidates.length}',
+      ),
+      game: game,
+      players: players,
+      tied: raffle.candidates,
+      prize: game.prizeById(raffle.prizeId),
+      winners: raffle.winner == null ? null : {raffle.winner!},
+      drawIndex: game.draws.length,
+      headline: raffle.kind == RaffleKind.underdogTie
+          ? 'EMPATE NO AZARÃO · SAÍRAM NA MESMA BOLA'
+          : 'SORTEIO · '
+                '${game.prizeById(raffle.prizeId)?.label.toUpperCase() ?? ''}',
     ),
     ChoiceOverlay(:final claim, :final offered, :final swapped) => _OneOverlay(
       key: ValueKey('choice-${claim.id.value}'),
@@ -706,7 +725,11 @@ class _TieOverlay extends StatefulWidget {
     required this.prize,
     required this.winners,
     required this.drawIndex,
+    this.headline,
   });
+
+  /// Replaces the "EMPATE" headline (draw of a prize someone gave up).
+  final String? headline;
 
   final Game game;
   final List<Player> players;
@@ -750,8 +773,9 @@ class _TieOverlayState extends State<_TieOverlay> {
                   vertical: 8,
                 ),
                 child: Text(
-                  'EMPATE · ${prize?.label.toUpperCase() ?? ''} · '
-                  '${prize == null ? '' : modalityName(prize).toUpperCase()} · NA MESMA BOLA',
+                  widget.headline ??
+                      'EMPATE · ${prize?.label.toUpperCase() ?? ''} · '
+                          '${prize == null ? '' : modalityName(prize).toUpperCase()} · NA MESMA BOLA',
                   textAlign: TextAlign.center,
                   style: AppText.body(
                     18,
@@ -776,7 +800,9 @@ class _TieOverlayState extends State<_TieOverlay> {
                     )
                   : EllipsisText(
                       key: const ValueKey('drawing'),
-                      'Sorteando o desempate…',
+                      widget.headline == null
+                          ? 'Sorteando o desempate…'
+                          : 'Aguardando o sorteio…',
                       textAlign: TextAlign.center,
                       style: AppText.display(56, color: AppColors.white),
                     ),

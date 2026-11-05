@@ -71,6 +71,13 @@ final class TieOverlay extends StreamOverlay {
   final Prize? next;
 }
 
+/// Host draw of a prize (azarão tie or one given up); [Raffle.winner] null
+/// while waiting for the host.
+final class RaffleOverlay extends StreamOverlay {
+  const RaffleOverlay(this.raffle);
+  final Raffle raffle;
+}
+
 /// Azarão decided mid-game: the last player left standing.
 final class UnderdogOverlay extends StreamOverlay {
   const UnderdogOverlay({required this.prize, required this.winners});
@@ -227,8 +234,10 @@ class StreamController extends GameWatchController {
 
   /// Current overlay, by priority: flash result > tie in progress > checking.
   StreamOverlay? get overlay {
-    if (_flash case final f?) return f;
     final g = game;
+    // An on-screen draw stays up until the next ball.
+    if (g?.raffle case final r?) return RaffleOverlay(r);
+    if (_flash case final f?) return f;
     if (g == null) return null;
     final pending = pendingClaims;
     if (pending.isEmpty) {

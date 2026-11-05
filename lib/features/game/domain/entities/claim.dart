@@ -26,7 +26,16 @@ enum ClaimStatus {
 }
 
 /// Player answer to an [ClaimStatus.awaitingChoice] claim.
-enum ClaimChoice { keep, swap }
+enum ClaimChoice {
+  keep,
+  swap,
+
+  /// Tie while at the limit: enter the draw anyway.
+  join,
+
+  /// Tie while at the limit: skip it; the others share the prize.
+  skip,
+}
 
 @freezed
 abstract class Claim with _$Claim {
@@ -54,6 +63,10 @@ abstract class Claim with _$Claim {
 
     /// Player answer: the prize they give up (the offer or one they hold).
     PrizeId? releasePrizeId,
+
+    /// Tie while the player is at the limit: they are asked first whether
+    /// they join the draw ([ClaimChoice.join]) or skip it.
+    @Default(false) bool tieOptIn,
     required DateTime createdAt,
   }) = _Claim;
 }

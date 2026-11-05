@@ -222,6 +222,7 @@ final class GameMapper {
     'tieBreak': s.tieBreak.name,
     'underdogTieBreak': s.underdogTie.name,
     'claimPenalty': penaltyToMap(s.claimPenalty),
+    'overLimit': s.overLimit.name,
   };
 
   GameSettings settingsFromMap(Json m) => GameSettings(
@@ -232,6 +233,29 @@ final class GameMapper {
         ? null
         : _enum(TieBreakRule.values, m['underdogTieBreak'], TieBreakRule.draw),
     claimPenalty: penaltyFromMap(m['claimPenalty']),
+    overLimit: _enum(
+      OverLimitRule.values,
+      m['overLimit'],
+      OverLimitRule.backToGame,
+    ),
+  );
+
+  Json raffleToMap(Raffle r) => {
+    'prizeId': r.prizeId.value,
+    'candidates': [for (final u in r.candidates) u.value],
+    'kind': r.kind.name,
+    'winner': r.winner?.value,
+    'releasedBy': r.releasedBy?.value,
+  };
+
+  Raffle raffleFromMap(Json m) => Raffle(
+    prizeId: PrizeId(m['prizeId']! as String),
+    candidates: _list(m['candidates'], (e) => UserId(e! as String)),
+    kind: _enum(RaffleKind.values, m['kind'], RaffleKind.released),
+    winner: m['winner'] is String ? UserId(m['winner']! as String) : null,
+    releasedBy: m['releasedBy'] is String
+        ? UserId(m['releasedBy']! as String)
+        : null,
   );
 
   // ---------------------------------------------------------------- winners
@@ -279,6 +303,7 @@ final class GameMapper {
     'lastActivityAt': g.lastActivityAt == null
         ? null
         : dates.encode(g.lastActivityAt!),
+    'raffle': g.raffle == null ? null : raffleToMap(g.raffle!),
   };
 
   Game gameFromMap(String id, Json m) => Game(
@@ -308,6 +333,7 @@ final class GameMapper {
     startedAt: _date(m['startedAt']),
     endedAt: _date(m['endedAt']),
     lastActivityAt: _date(m['lastActivityAt']),
+    raffle: m['raffle'] == null ? null : raffleFromMap(_map(m['raffle'])),
   );
 
   // ----------------------------------------------------------- player/card
@@ -361,6 +387,7 @@ final class GameMapper {
     'offerPrizeId': c.offerPrizeId?.value,
     'choice': c.choice?.name,
     'releasePrizeId': c.releasePrizeId?.value,
+    'tieOptIn': c.tieOptIn,
     'createdAt': dates.encode(c.createdAt),
   };
 
@@ -383,6 +410,7 @@ final class GameMapper {
     verdict: m['verdict'] == null
         ? null
         : _enum(ClaimVerdict.values, m['verdict'], ClaimVerdict.tampered),
+    tieOptIn: m['tieOptIn'] as bool? ?? false,
     matched: _list(m['matched'], (e) {
       final p = _map(e);
       return PatternMatch(

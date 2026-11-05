@@ -9,6 +9,38 @@ enum GameStatus { lobby, running, finished, abandoned }
 
 enum TieBreakRule { draw, allWin }
 
+/// What happens to a prize a player gives up because of the room limit.
+enum OverLimitRule {
+  /// It goes back into play (the bingo continues for it).
+  backToGame,
+
+  /// The host draws it among everyone still under the limit.
+  raffle,
+}
+
+enum RaffleKind {
+  /// The last players of the azarão fell on the same ball.
+  underdogTie,
+
+  /// A prize given up over the limit, drawn among the others.
+  released,
+}
+
+/// A prize drawn by the host on screen (stream shows it too). Set with
+/// [winner] null; the host's draw fills it; the next ball clears it.
+@freezed
+abstract class Raffle with _$Raffle {
+  const factory Raffle({
+    required PrizeId prizeId,
+    required List<UserId> candidates,
+    required RaffleKind kind,
+    UserId? winner,
+
+    /// Who gave the prize up ([RaffleKind.released]).
+    UserId? releasedBy,
+  }) = _Raffle;
+}
+
 /// Who may join (§2, R4).
 @freezed
 sealed class AccessPolicy with _$AccessPolicy {
@@ -40,6 +72,7 @@ abstract class GameSettings with _$GameSettings {
     /// Tie-break of the underdog prize. Null (old games) = same as [tieBreak].
     TieBreakRule? underdogTieBreak,
     @Default(ClaimPenaltyPolicy.none()) ClaimPenaltyPolicy claimPenalty,
+    @Default(OverLimitRule.backToGame) OverLimitRule overLimit,
   }) = _GameSettings;
 }
 
@@ -98,6 +131,9 @@ abstract class Game with _$Game {
     /// Last host/player action (draw, claim, confirmation). Drives the
     /// automatic end after [idleLimit] without activity.
     DateTime? lastActivityAt,
+
+    /// Draw in progress or just decided (see [Raffle]).
+    Raffle? raffle,
   }) = _Game;
 
   /// A lobby/running game with no activity for this long ends as abandoned.

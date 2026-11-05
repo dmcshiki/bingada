@@ -130,6 +130,11 @@ class CreateRoomController extends ChangeNotifier {
   TieBreakRule tieBreak = TieBreakRule.draw;
   TieBreakRule underdogTie = TieBreakRule.draw;
 
+  /// What happens to a prize a player gives up over the limit.
+  OverLimitRule overLimit = OverLimitRule.backToGame;
+
+  void setOverLimit(OverLimitRule v) => update(() => overLimit = v);
+
   /// Skip N draws after a wrong claim; 0 = no penalty.
   int penaltyDraws = 0;
 
@@ -493,6 +498,7 @@ class CreateRoomController extends ChangeNotifier {
       showFailsOnStream: showFailsOnStream,
       tieBreak: tieBreak,
       underdogTieBreak: underdogTie,
+      overLimit: overLimit,
       claimPenalty: penaltyDraws > 0
           ? ClaimPenaltyPolicy.skipDraws(draws: penaltyDraws)
           : const ClaimPenaltyPolicy.none(),
@@ -645,6 +651,7 @@ class CreateRoomController extends ChangeNotifier {
     showFailsOnStream = g.settings.showFailsOnStream;
     tieBreak = g.settings.tieBreak;
     underdogTie = g.settings.underdogTie;
+    overLimit = g.settings.overLimit;
     penaltyDraws = switch (g.settings.claimPenalty) {
       SkipDraws(:final draws) => draws,
       NoPenalty() => 0,

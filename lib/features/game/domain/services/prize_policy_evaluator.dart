@@ -21,7 +21,14 @@ final class PrizePolicyEvaluator {
       final allowed = policy.allow[p];
       if (allowed == null) continue;
       for (final q in set) {
-        if (q != p && !allowed.contains(q)) return false;
+        // The matrix only fills one direction per pair (row = earlier
+        // prize), but prizes now run at the same time and can be won in
+        // any order: the pair is allowed when either direction says so.
+        if (q != p &&
+            !allowed.contains(q) &&
+            !(policy.allow[q]?.contains(p) ?? false)) {
+          return false;
+        }
       }
     }
     return true;

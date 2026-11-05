@@ -107,12 +107,25 @@ class ClaimResultOverlay extends StatelessWidget {
         AppColors.primary,
         AppColors.white,
         AppColors.navy,
-        'PRÊMIO MANTIDO',
-        'Você ficou com o prêmio que já tinha. O jogo segue, e você pode gritar BINGO de novo.',
+        'PRÊMIOS MANTIDOS',
+        'Você ficou com os prêmios que já tinha. O jogo segue.',
+        'Continuar jogando',
+      ),
+      ClaimOverlayKind.skipped => (
+        '↷',
+        72.0,
+        AppColors.primary,
+        AppColors.white,
+        AppColors.navy,
+        'VOCÊ PULOU O DESEMPATE',
+        'Você continua com seus prêmios, e ${prize?.label ?? 'este prêmio'} '
+            'fica com quem bingou junto com você.',
         'Continuar jogando',
       ),
       // Rendered by [ChoosePrizeOverlay]; never reaches this switch.
-      ClaimOverlayKind.choose || ClaimOverlayKind.other => (
+      ClaimOverlayKind.choose ||
+      ClaimOverlayKind.optIn ||
+      ClaimOverlayKind.other => (
         '!',
         72.0,
         AppColors.graphite,

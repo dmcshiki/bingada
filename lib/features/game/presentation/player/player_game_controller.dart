@@ -27,6 +27,12 @@ enum ClaimOverlayKind {
 
   /// The player kept the prize they already had.
   kept,
+
+  /// Tie while at the limit: join the draw or skip it.
+  optIn,
+
+  /// The player skipped a tie (stays with their prizes).
+  skipped,
 }
 
 /// A prize that was just delivered (09c).
@@ -128,6 +134,21 @@ class PlayerGameController extends GameWatchController {
             kind: ToastKind.bingo,
           ),
         );
+      } else if (c.status == ClaimStatus.declined && c.tieOptIn) {
+        _toast(
+          ToastData(
+            title: '${_first(c.uid)} pulou o desempate',
+            body: 'Já estava no limite de prêmios.',
+          ),
+        );
+      } else if (c.status == ClaimStatus.declined) {
+        final p = game?.prizeById(c.offerPrizeId ?? c.prizeId);
+        _toast(
+          ToastData(
+            title: '${_first(c.uid)} ficou com os prêmios que já tinha',
+            body: p == null ? null : '${p.label} segue a regra da sala.',
+          ),
+        );
       } else if (c.status == ClaimStatus.rejected) {
         _toast(
           ToastData(
@@ -166,6 +187,34 @@ class PlayerGameController extends GameWatchController {
 
   @override
   void onGameChanged(Game? previous, Game next) {
+    // A draw the host is about to run (azarão tie or a prize given up).
+    final r = next.raffle;
+    if (previous != null &&
+        r != null &&
+        r.winner == null &&
+        previous.raffle?.prizeId != r.prizeId) {
+      final prize = next.prizeById(r.prizeId);
+      final names = [for (final u in r.candidates) _first(u)];
+      final me = user?.uid;
+      final among = names.length <= 4
+          ? names.join(', ')
+          : '${names.length} pessoas';
+      _toast(
+        ToastData(
+          title: switch (r.kind) {
+            RaffleKind.underdogTie => 'Empate no azarão!',
+            RaffleKind.released when r.releasedBy != null =>
+              '${_first(r.releasedBy!)} abriu mão de ${prize?.label ?? 'um prêmio'}',
+            RaffleKind.released =>
+              '${prize?.label ?? 'Um prêmio'} vai a sorteio',
+          },
+          body: r.candidates.contains(me)
+              ? 'Você está no sorteio com $among. O host vai sortear agora.'
+              : 'O host vai sortear entre $among.',
+          kind: ToastKind.bingo,
+        ),
+      );
+    }
     // A new ball closes any result overlay (not the waiting one).
     if (previous != null &&
         next.draws.length > previous.draws.length &&
@@ -173,7 +222,8 @@ class PlayerGameController extends GameWatchController {
       final kind = overlay;
       if (kind != null &&
           kind != ClaimOverlayKind.waiting &&
-          kind != ClaimOverlayKind.choose) {
+          kind != ClaimOverlayKind.choose &&
+          kind != ClaimOverlayKind.optIn) {
         _followed = null;
       }
     }
@@ -285,6 +335,10 @@ class PlayerGameController extends GameWatchController {
 
   Future<void> choose(ClaimChoice choice) => _answer(choice, null);
 
+  /// Tie while at the limit: enter the draw ([join]) or skip it.
+  Future<void> answerTie({required bool join}) =>
+      _answer(join ? ClaimChoice.join : ClaimChoice.skip, null);
+
   /// Gives up [prize] (the new one or one already held).
   Future<void> release(PrizeId prize) => _answer(null, prize);
 
@@ -306,7 +360,9 @@ class PlayerGameController extends GameWatchController {
   }
 
   ClaimOverlayKind? get overlay {
-    if (choiceClaim != null) return ClaimOverlayKind.choose;
+    if (choiceClaim case final c?) {
+      return c.tieOptIn ? ClaimOverlayKind.optIn : ClaimOverlayKind.choose;
+    }
     if (_followed == null) return null;
     final c = followedClaim;
     if (c == null) return ClaimOverlayKind.waiting;
@@ -316,7 +372,8 @@ class PlayerGameController extends GameWatchController {
       ClaimStatus.confirmed => ClaimOverlayKind.valid,
       // Answer sent; the host is applying it.
       ClaimStatus.awaitingChoice => ClaimOverlayKind.waiting,
-      ClaimStatus.declined => ClaimOverlayKind.kept,
+      ClaimStatus.declined =>
+        c.tieOptIn ? ClaimOverlayKind.skipped : ClaimOverlayKind.kept,
       ClaimStatus.rejected => switch (c.verdict) {
         ClaimVerdict.missed => ClaimOverlayKind.missed,
         ClaimVerdict.wrongPattern => ClaimOverlayKind.wrongPattern,

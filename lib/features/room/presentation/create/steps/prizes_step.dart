@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/widgets.dart';
+import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/entities/prize.dart';
 import 'package:tokingo/features/room/presentation/create/create_room_controller.dart';
 import 'package:tokingo/features/room/presentation/create/create_room_page.dart';
@@ -351,6 +352,42 @@ class _LimitCard extends StatelessWidget {
               ],
             ],
           ),
+          if (c.maxPerPlayer != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Se alguém ganhar além do limite, escolhe com quais fica e o '
+              'prêmio que sobrar…',
+              style: bold12,
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChipButton(
+                    label: 'volta para o jogo',
+                    selected: c.overLimit == OverLimitRule.backToGame,
+                    radius: 14,
+                    onTap: () => c.setOverLimit(OverLimitRule.backToGame),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: ChoiceChipButton(
+                    label: 'é sorteado entre os outros',
+                    selected: c.overLimit == OverLimitRule.raffle,
+                    radius: 14,
+                    onTap: () => c.setOverLimit(OverLimitRule.raffle),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Se outras pessoas bingaram junto, o prêmio vai para elas '
+              '(sorteado na tela se forem várias). O azarão é sempre sorteado.',
+              style: AppText.body(12, height: 1.4),
+            ),
+          ],
           if (cols.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text('Quem ganhou… pode concorrer a:', style: bold12),

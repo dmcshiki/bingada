@@ -131,6 +131,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
         busy: _c.choosing,
         onChoose: _c.choose,
         onRelease: _c.release,
+        onAnswerTie: (join) => _c.answerTie(join: join),
       )
     else if (_c.overlay case final kind?)
       ClaimResultOverlay(

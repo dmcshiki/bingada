@@ -23,9 +23,11 @@ abstract final class AppColors {
   /// Default column colors (B I N G O).
   static const List<Color> columns = [primary, cyan, green, pink, purple];
 
-  /// Readable foreground for a column/background color (AA).
+  /// Foreground for a column/background color. White on every palette
+  /// color so all columns look alike; dark ink only on very light custom
+  /// colors, where white would disappear.
   static Color onColor(Color c) =>
-      c.computeLuminance() > 0.35 ? inkOnLight : white;
+      c.computeLuminance() > 0.6 ? inkOnLight : white;
 
   static Color parseHex(String hex) {
     final h = hex.replaceFirst('#', '');

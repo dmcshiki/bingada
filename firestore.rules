@@ -168,6 +168,7 @@ service cloud.firestore {
           && request.resource.data.verdict == null
           && request.resource.data.get('choice', null) == null
           && request.resource.data.get('offerPrizeId', null) == null
+          && request.resource.data.get('tieOptIn', false) == false
           && request.resource.data.get('releasePrizeId', null) == null
           && gameBefore(gameId).status == 'running'
           && request.resource.data.drawIndex == gameBefore(gameId).draws.size()
@@ -181,7 +182,8 @@ service cloud.firestore {
         allow update: if signedIn() && (
           (gameBefore(gameId).hostUid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['status', 'verdict', 'matched', 'offerPrizeId']))
+                 .hasOnly(['status', 'verdict', 'matched', 'offerPrizeId',
+                          'choice', 'releasePrizeId', 'tieOptIn']))
           // Winner over the prize limit answers once: the prize given up
           // (releasePrizeId) and/or the legacy keep/swap.
           || (resource.data.uid == request.auth.uid
@@ -190,7 +192,7 @@ service cloud.firestore {
             && resource.data.get('releasePrizeId', null) == null
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['choice', 'releasePrizeId'])
-            && request.resource.data.get('choice', null) in [null, 'keep', 'swap']
+            && request.resource.data.get('choice', null) in [null, 'keep', 'swap', 'join', 'skip']
             && (request.resource.data.get('releasePrizeId', null) == null
               || (request.resource.data.releasePrizeId is string
                 && request.resource.data.releasePrizeId.size() > 0

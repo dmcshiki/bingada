@@ -247,7 +247,10 @@ final class LocalGameRepository implements GameRepository {
           c.drawIndex == game.draws.length && c.status == ClaimStatus.pending,
     );
     if (pending) throw const GameFailure(GameFailureCode.pendingClaims);
-    _writeGame(game.copyWith(draws: [...game.draws, item]));
+    if (game.raffle case final r? when r.winner == null) {
+      throw const GameFailure(GameFailureCode.pendingClaims);
+    }
+    _writeGame(game.copyWith(draws: [...game.draws, item], raffle: null));
   }
 
   List<Claim> _claims(GameId id) => [
@@ -296,6 +299,9 @@ final class LocalGameRepository implements GameRepository {
       'verdict': next['verdict'],
       'matched': next['matched'],
       'offerPrizeId': next['offerPrizeId'],
+      'choice': next['choice'],
+      'releasePrizeId': next['releasePrizeId'],
+      'tieOptIn': next['tieOptIn'],
     };
     _writeJson(_claimsKey(id), claims);
   }
@@ -305,6 +311,13 @@ final class LocalGameRepository implements GameRepository {
     final game = _requireGame(id);
     _requireHost(game);
     _writeGame(game.copyWith(winners: winners));
+  }
+
+  @override
+  Future<void> setRaffle(GameId id, Raffle? raffle) async {
+    final game = _requireGame(id);
+    _requireHost(game);
+    _writeGame(game.copyWith(raffle: raffle));
   }
 
   @override

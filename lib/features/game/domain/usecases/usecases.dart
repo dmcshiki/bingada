@@ -382,6 +382,8 @@ final class AwardUnderdog {
     final awarded = {for (final w in game.winners) w.prizeId};
     return game.status == GameStatus.running &&
         game.draws.isNotEmpty &&
+        // A tie of the azarão already waits for the host's draw.
+        game.raffle == null &&
         game.endOfGamePrizes.any(
           (p) => p.pattern == PatternKind.underdog && !awarded.contains(p.id),
         );
@@ -393,6 +395,34 @@ final class AwardUnderdog {
     final seed = await _secrets.loadDrawSeed(game.id);
     if (seed == null) return const [];
     final cards = _cards[game.id] ??= await _repo.getCards(game.id);
+    // Real tie (the last ones fell on the same ball) with "draw": the host
+    // draws it on screen instead of it being picked silently.
+    if (game.settings.underdogTie == TieBreakRule.draw) {
+      for (final prize in game.endOfGamePrizes) {
+        if (prize.pattern != PatternKind.underdog || game.isWon(prize.id)) {
+          continue;
+        }
+        final r = _underdog.run(
+          cards: cards,
+          draws: game.draws,
+          underdogPrize: prize,
+          winners: game.winners,
+          policy: game.prizePolicy,
+          freeCellIndex: game.template.freeCellIndex,
+        );
+        if (r.decided && r.tied) {
+          await _repo.setRaffle(
+            game.id,
+            Raffle(
+              prizeId: prize.id,
+              candidates: r.survivors,
+              kind: RaffleKind.underdogTie,
+            ),
+          );
+          return const [];
+        }
+      }
+    }
     final winners = underdogWinners(
       game: game,
       cards: cards,

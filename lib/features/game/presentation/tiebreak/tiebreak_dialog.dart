@@ -25,15 +25,26 @@ class TiebreakDialog extends StatefulWidget {
 class _TiebreakDialogState extends State<TiebreakDialog> {
   UserId? _winner;
 
+  @override
+  void initState() {
+    super.initState();
+    // Tied players already at the limit choose first: join or skip.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => widget.controller.askTieOptIns(widget.tied),
+    );
+  }
+
+  List<Claim> get _live => widget.controller.tieState(widget.tied).live;
+
   Future<void> _draw() async {
-    final w = await widget.controller.drawTie(widget.tied);
+    final w = await widget.controller.drawTie(_live);
     if (mounted) setState(() => _winner = w);
   }
 
   Future<void> _confirm() async {
     final w = _winner;
     if (w == null) return;
-    final ok = await widget.controller.confirmTie(widget.tied, w);
+    final ok = await widget.controller.confirmTie(_live, w);
     if (ok && mounted) Navigator.of(context).pop();
   }
 
@@ -49,6 +60,15 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
           ? ''
           : ' (${g.template.ballText(g.currentBall!)})';
       final done = _winner != null;
+      final st = c.tieState(widget.tied);
+      final skipped = {for (final s in st.skipped) s.uid};
+      final waitingNames = [
+        for (final t in c.claims)
+          if (widget.tied.any((x) => x.id == t.id) &&
+              t.status == ClaimStatus.awaitingChoice &&
+              t.tieOptIn)
+            playerName(c.players, t.uid),
+      ];
       final count = widget.tied.length;
       final countWord = switch (count) {
         2 => 'dois',
@@ -142,7 +162,9 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                                   g.template,
                                   prize: prize,
                                 ),
-                                state: !done
+                                state: skipped.contains(t.uid)
+                                    ? TieCardState.loser
+                                    : !done
                                     ? TieCardState.pending
                                     : t.uid == _winner
                                     ? TieCardState.winner
@@ -164,7 +186,52 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                               ),
                             ),
                           ),
-                        if (!done)
+                        if (st.waiting)
+                          Text(
+                            'Aguardando ${waitingNames.join(', ')} decidir se entra no '
+                            'sorteio: já está no limite de prêmios da sala.',
+                            textAlign: TextAlign.center,
+                            style: AppText.body(
+                              16,
+                              weight: FontWeight.w700,
+                              color: AppColors.white,
+                            ),
+                          )
+                        else if (!done && st.live.isEmpty)
+                          AppButton(
+                            label: 'Todos pularam · seguir a regra da sala',
+                            kind: AppButtonKind.light,
+                            height: 60,
+                            fontSize: 16,
+                            onPressed: c.busy
+                                ? null
+                                : () async {
+                                    final nav = Navigator.of(context);
+                                    final ok = await c.releaseSkippedTie(
+                                      widget.tied.first.prizeId,
+                                    );
+                                    if (ok) nav.pop();
+                                  },
+                          )
+                        else if (!done && st.live.length == 1)
+                          AppButton(
+                            label:
+                                '${playerName(c.players, st.live.single.uid)} '
+                                'fica com o prêmio',
+                            kind: AppButtonKind.light,
+                            height: 60,
+                            fontSize: 16,
+                            onPressed: c.busy
+                                ? null
+                                : () async {
+                                    final nav = Navigator.of(context);
+                                    final ok = await c.awardSoleTied(
+                                      st.live.single,
+                                    );
+                                    if (ok) nav.pop();
+                                  },
+                          )
+                        else if (!done)
                           AppButton(
                             label: 'SORTEAR DESEMPATE',
                             kind: AppButtonKind.light,

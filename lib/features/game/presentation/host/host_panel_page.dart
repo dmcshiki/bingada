@@ -396,6 +396,17 @@ class _DrawPanel extends StatelessWidget {
                                 style: AppText.body(14, color: AppColors.white),
                               ),
                               const SizedBox(height: 18),
+                              if (game.raffle case final r?) ...[
+                                _RaffleBox(
+                                  raffle: r,
+                                  game: game,
+                                  players: controller.players,
+                                  busy: controller.busy,
+                                  onDraw: () =>
+                                      unawaited(controller.runRaffle()),
+                                ),
+                                const SizedBox(height: 18),
+                              ],
                               BallToken(
                                 template: game.template,
                                 ball: game.currentBall,
@@ -505,6 +516,79 @@ class _DrawPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// On-screen draw of a prize (azarão tie or a prize given up). Pending: the
+/// host presses SORTEAR; decided: shows who won until the next ball.
+class _RaffleBox extends StatelessWidget {
+  const _RaffleBox({
+    required this.raffle,
+    required this.game,
+    required this.players,
+    required this.busy,
+    required this.onDraw,
+  });
+
+  final Raffle raffle;
+  final Game game;
+  final List<Player> players;
+  final bool busy;
+  final VoidCallback onDraw;
+
+  @override
+  Widget build(BuildContext context) {
+    final prize = game.prizeById(raffle.prizeId);
+    final label = prize?.label ?? 'Prêmio';
+    final why = switch (raffle.kind) {
+      RaffleKind.underdogTie => 'Empate no azarão: saíram todos na mesma bola',
+      RaffleKind.released when raffle.releasedBy != null =>
+        '${playerName(players, raffle.releasedBy!)} abriu mão deste prêmio',
+      RaffleKind.released => 'Ninguém ficou com este prêmio',
+    };
+    final names = [for (final u in raffle.candidates) playerName(players, u)]
+        .join(', ');
+    final winner = raffle.winner;
+    return Container(
+      width: 520,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: .12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'SORTEIO · ${label.toUpperCase()}',
+            textAlign: TextAlign.center,
+            style: AppText.kicker(color: AppColors.white),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            winner == null
+                ? '$why. Entre: $names.'
+                : '🏆 ${playerName(players, winner)} ganhou $label no sorteio.',
+            textAlign: TextAlign.center,
+            style: AppText.body(
+              15,
+              weight: winner == null ? FontWeight.w400 : FontWeight.w700,
+              color: AppColors.white,
+            ),
+          ),
+          if (winner == null) ...[
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'SORTEAR ${label.toUpperCase()}',
+              kind: AppButtonKind.light,
+              height: 52,
+              displayFont: true,
+              fontSize: 18,
+              onPressed: busy ? null : onDraw,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

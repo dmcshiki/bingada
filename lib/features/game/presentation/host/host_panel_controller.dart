@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
+import 'package:tokingo/features/game/domain/entities/prize.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
 import 'package:tokingo/features/game/domain/services/bingo_verifier.dart';
 import 'package:tokingo/features/game/domain/services/prize_policy_evaluator.dart';
@@ -148,8 +149,17 @@ class HostPanelController extends GameWatchController {
     if (pendingClaims.isNotEmpty) {
       return 'Confira os pedidos de BINGO antes de sortear a próxima bola';
     }
+    if (g.raffle case final r? when r.winner == null) {
+      final label = g.prizeById(r.prizeId)?.label ?? 'prêmio';
+      return 'Faça o sorteio de $label antes de seguir';
+    }
+    if (claims.any(
+      (c) => c.status == ClaimStatus.awaitingChoice && c.tieOptIn,
+    )) {
+      return 'Aguardando quem já está no limite decidir se entra no desempate';
+    }
     if (claims.any((c) => c.status == ClaimStatus.awaitingChoice)) {
-      return 'Aguardando o ganhador escolher qual prêmio fica';
+      return 'Aguardando o ganhador escolher quais prêmios ficam';
     }
     return null;
   }
@@ -315,7 +325,8 @@ class HostPanelController extends GameWatchController {
       if (c.status != ClaimStatus.awaitingChoice || !c.answered) continue;
       if (!_choosing.add(c.id)) continue;
       unawaited(
-        _run(() => _applyChoice(c)).whenComplete(() => _choosing.remove(c.id)),
+        _run(() => c.tieOptIn ? _applyOptIn(c) : _applyChoice(c))
+            .whenComplete(() => _choosing.remove(c.id)),
       );
     }
   }
@@ -343,6 +354,8 @@ class HostPanelController extends GameWatchController {
         verdict: r?.verdict ?? ClaimVerdict.valid,
         matched: r?.matched ?? c.matched,
         offerPrizeId: prize == c.prizeId ? null : prize,
+        // From here on an awaitingChoice is about which prizes to keep.
+        tieOptIn: false,
       );
 
   /// Gives [prize] to the player of [c]. When that would exceed the room's
@@ -425,18 +438,160 @@ class HostPanelController extends GameWatchController {
       await _repoUpdate(g, c.copyWith(status: ClaimStatus.declined));
       released = offer;
     }
-    if (pool.isEmpty) return _endIfDone();
-    final Claim next;
+    if (pool.isEmpty) return _releaseFree(released, releasedBy: c.uid);
     if (pool.length == 1) {
-      next = pool.single;
-    } else {
-      final uid = await _resolveTie(g, [
-        for (final o in pool) o.uid,
-      ], prizeId: released);
-      next = pool.firstWhere((o) => o.uid == uid);
+      final next = pool.single;
+      await _award(next, results[next.id], released, tieBreak: true);
+      return;
     }
-    await _award(next, results[next.id], released, tieBreak: true);
+    // 2+ others bingoed with them: drawn on screen among those.
+    await repository.setRaffle(
+      g.id,
+      Raffle(
+        prizeId: released,
+        candidates: [for (final o in pool) o.uid],
+        kind: RaffleKind.released,
+        releasedBy: c.uid,
+      ),
+    );
   }
+
+  /// A prize nobody tied for was given up: back into play, or drawn among
+  /// everyone still under the limit (room setting). The azarão is always
+  /// drawn, since its race is already over.
+  Future<void> _releaseFree(PrizeId prizeId, {UserId? releasedBy}) async {
+    final g = await _fresh();
+    final prize = g.prizeById(prizeId);
+    if (prize == null) return _endIfDone();
+    final underdog = prize.pattern == PatternKind.underdog;
+    if (g.settings.overLimit == OverLimitRule.raffle || underdog) {
+      final candidates = [
+        for (final p in players)
+          if (p.uid != releasedBy &&
+              _policy.isEligible(
+                uid: p.uid,
+                target: prize,
+                winners: g.winners,
+                policy: g.prizePolicy,
+              ))
+            p.uid,
+      ];
+      if (candidates.isNotEmpty) {
+        await repository.setRaffle(
+          g.id,
+          Raffle(
+            prizeId: prizeId,
+            candidates: candidates,
+            kind: RaffleKind.released,
+            releasedBy: releasedBy,
+          ),
+        );
+        return;
+      }
+    }
+    // Back into play: it has no winner now, so it is open again.
+    await _endIfDone();
+  }
+
+  // ------------------------------------------------------------ raffle
+
+  /// Host presses SORTEAR on a pending [Raffle]: seeded, auditable pick
+  /// (same as the tiebreak), shown on the stream, then the prize goes out.
+  Future<bool> runRaffle() async {
+    final r = game?.raffle;
+    if (r == null || r.winner != null) return false;
+    return _run(() async {
+      final g = await _fresh();
+      final uid = await _resolveTie(g, r.candidates, prizeId: r.prizeId);
+      await repository.setRaffle(g.id, r.copyWith(winner: uid));
+      // One of those who bingoed with the releaser: their claim carries the
+      // prize (and the limit check, if they hit it).
+      for (final o in claims) {
+        if (o.uid == uid && o.status == ClaimStatus.tied) {
+          await _award(o, results[o.id], r.prizeId, tieBreak: true);
+          return;
+        }
+      }
+      final w = Winner(
+        prizeId: r.prizeId,
+        uid: uid,
+        drawIndex: g.draws.length,
+        tieBreak: true,
+      );
+      if (g.prizes.any((p) => p.id == r.prizeId)) {
+        await _confirmPrize(g, [w]);
+      } else {
+        await repository.awardPrize(g.id, winners: [w]);
+        await _endIfDone();
+      }
+    });
+  }
+
+  // ------------------------------------------------- tie with opt-in
+
+  /// Before a tie draw, tied players already at the limit are asked whether
+  /// they join it or skip it (skipping leaves it to the others).
+  Future<void> askTieOptIns(List<Claim> tied) async {
+    await _run(() async {
+      final g = await _fresh();
+      for (final c in tied) {
+        final now = claims.firstWhere((o) => o.id == c.id, orElse: () => c);
+        if (now.tieOptIn || now.status != ClaimStatus.pending) continue;
+        if (!_needsChoice(g, c.uid, c.prizeId)) continue;
+        await _repoUpdate(
+          g,
+          _asValid(
+            now,
+            results[c.id],
+            c.prizeId,
+            ClaimStatus.awaitingChoice,
+          ).copyWith(tieOptIn: true),
+        );
+      }
+    });
+  }
+
+  /// A tie right now: who is still in it, who skipped, and whether someone
+  /// still has to answer.
+  TieState tieState(List<Claim> tied) {
+    final ids = {for (final c in tied) c.id};
+    final now = [
+      for (final c in claims)
+        if (ids.contains(c.id)) withResult(c),
+    ];
+    return TieState(
+      live: [
+        for (final c in now)
+          if (c.status == ClaimStatus.pending) c,
+      ],
+      skipped: [
+        for (final c in now)
+          if (c.status == ClaimStatus.declined && c.tieOptIn) c,
+      ],
+      waiting: now.any(
+        (c) => c.status == ClaimStatus.awaitingChoice && c.tieOptIn,
+      ),
+    );
+  }
+
+  /// Applies a join/skip answer: join puts the claim back in the tie.
+  Future<void> _applyOptIn(Claim c) async {
+    final g = await _fresh();
+    await _repoUpdate(
+      g,
+      c.choice == ClaimChoice.skip
+          ? c.copyWith(status: ClaimStatus.declined)
+          : c.copyWith(status: ClaimStatus.pending, choice: null),
+    );
+  }
+
+  /// Only one player left after the others skipped: they take the prize.
+  Future<bool> awardSoleTied(Claim c) =>
+      _run(() => _award(c, results[c.id], c.prizeId, tieBreak: true));
+
+  /// Everyone in the tie skipped: the prize follows the room rule.
+  Future<bool> releaseSkippedTie(PrizeId prize) =>
+      _run(() => _releaseFree(prize));
 
   /// Ends the game once no prize is open and nobody is still choosing.
   Future<void> _endIfDone() async {
@@ -459,6 +614,9 @@ class HostPanelController extends GameWatchController {
     if (claims.any((c) => c.status == ClaimStatus.awaitingChoice)) {
       return 'Aguarde o ganhador escolher qual prêmio fica antes de encerrar';
     }
+    if (g.raffle case final r? when r.winner == null) {
+      return 'Faça o sorteio pendente antes de encerrar';
+    }
     return null;
   }
 
@@ -474,4 +632,22 @@ class HostPanelController extends GameWatchController {
     }
     return await _run(() => _endGame(g, status: GameStatus.abandoned));
   }
+}
+
+/// A tie while tied players at the limit decide whether to join.
+final class TieState {
+  const TieState({
+    required this.live,
+    required this.skipped,
+    required this.waiting,
+  });
+
+  /// Still in the tie (pending claims).
+  final List<Claim> live;
+
+  /// Were at the limit and chose to skip.
+  final List<Claim> skipped;
+
+  /// Someone has not answered yet.
+  final bool waiting;
 }

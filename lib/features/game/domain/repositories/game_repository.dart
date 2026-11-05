@@ -75,6 +75,10 @@ abstract interface class GameRepository {
   /// Host: replaces the whole winners list (prize swaps).
   Future<void> setWinners(GameId id, List<Winner> winners);
 
+  /// Host: starts, decides ([Raffle.winner]) or clears an on-screen draw.
+  /// The next ball clears it too.
+  Future<void> setRaffle(GameId id, Raffle? raffle);
+
   /// Player: answers an `awaitingChoice` claim of their own. [choice] is the
   /// legacy keep/swap; [releasePrizeId] names the prize given up.
   Future<void> chooseClaim(

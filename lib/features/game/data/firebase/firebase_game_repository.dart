@@ -207,11 +207,18 @@ final class FirebaseGameRepository implements GameRepository {
       if (game.status != GameStatus.running) {
         throw const GameFailure(GameFailureCode.finished);
       }
+      if (game.raffle case final r? when r.winner == null) {
+        throw const GameFailure(
+          GameFailureCode.pendingClaims,
+          'Faça o sorteio pendente antes da próxima bola.',
+        );
+      }
       if (game.draws.length != before.draws.length) {
         throw const GameFailure(GameFailureCode.conflict);
       }
       tx.update(_game(id), {
         'draws': [for (final d in game.draws) d.value, item.value],
+        'raffle': null,
         'lastActivityAt': FieldValue.serverTimestamp(),
       });
     });
@@ -260,6 +267,9 @@ final class FirebaseGameRepository implements GameRepository {
       'verdict': claim.verdict?.name,
       'matched': _map.claimToMap(claim)['matched'],
       'offerPrizeId': claim.offerPrizeId?.value,
+      'choice': claim.choice?.name,
+      'releasePrizeId': claim.releasePrizeId?.value,
+      'tieOptIn': claim.tieOptIn,
     });
     await _game(id).update({'lastActivityAt': FieldValue.serverTimestamp()});
   });
@@ -268,6 +278,14 @@ final class FirebaseGameRepository implements GameRepository {
   Future<void> setWinners(GameId id, List<Winner> winners) => _guard(
     () => _game(id).update({
       'winners': [for (final w in winners) _map.winnerToMap(w)],
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    }),
+  );
+
+  @override
+  Future<void> setRaffle(GameId id, Raffle? raffle) => _guard(
+    () => _game(id).update({
+      'raffle': raffle == null ? null : _map.raffleToMap(raffle),
       'lastActivityAt': FieldValue.serverTimestamp(),
     }),
   );
