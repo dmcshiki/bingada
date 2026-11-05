@@ -42,9 +42,17 @@ class HowToStep {
 /// "Como jogar": 4 tabbed steps + modalities (01–01d). [compact] renders a
 /// vertical list for the in-game side sheet (09e).
 class HowToPlayPanel extends StatefulWidget {
-  const HowToPlayPanel({super.key, this.compact = false, this.initialStep = 0});
+  const HowToPlayPanel({
+    super.key,
+    this.compact = false,
+    this.initialStep = 0,
+    this.showTitle = true,
+  });
 
   final bool compact;
+
+  /// False when the host container already shows "como jogar".
+  final bool showTitle;
   final int initialStep;
 
   @override
@@ -61,8 +69,10 @@ class _HowToPlayPanelState extends State<HowToPlayPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SplitTitle('como', 'jogar', size: 26),
-          const SizedBox(height: 16),
+          if (widget.showTitle) ...[
+            const SplitTitle('como', 'jogar', size: 26),
+            const SizedBox(height: 16),
+          ],
           for (final s in HowToStep.all) ...[
             _CompactStep(step: s),
             const SizedBox(height: 12),

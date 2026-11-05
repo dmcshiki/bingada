@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:tokingo/core/types/ids.dart';
+import 'package:tokingo/core/ui/toast.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
@@ -9,6 +10,7 @@ import 'package:tokingo/features/game/domain/entities/prize.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
 import 'package:tokingo/features/game/domain/services/penalty_evaluator.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
+import 'package:tokingo/features/game/presentation/common/game_format.dart';
 import 'package:tokingo/features/game/presentation/common/game_watch_controller.dart';
 
 /// Overlay 10 state, derived from the player's own latest claim.
@@ -93,15 +95,58 @@ class PlayerGameController extends GameWatchController {
   /// Called once per NEW pending claim from anyone (not on initial load).
   void Function()? onNewPendingClaim;
 
+  final _toasts = StreamController<ToastData>.broadcast();
+
+  /// Game notifications for this player (other people's events).
+  Stream<ToastData> get toasts => _toasts.stream;
+
+  final Map<ClaimId, ClaimStatus> _lastStatus = {};
+
+  void _toast(ToastData t) {
+    if (!_toasts.isClosed) _toasts.add(t);
+  }
+
+  String _first(UserId uid) => playerName(players, uid).split(' ').first;
+
   @override
   void onClaimsChanged(List<Claim> next, {required bool first}) {
     var fresh = false;
+    final me = user?.uid;
     for (final c in next) {
       if (c.status == ClaimStatus.pending && _seenPending.add(c.id)) {
         fresh = true;
       }
+      final before = _lastStatus[c.id];
+      _lastStatus[c.id] = c.status;
+      // Own claims have their own overlay; old ones are not replayed.
+      if (first || c.uid == me || before == c.status) continue;
+      if (before == null && c.status == ClaimStatus.pending) {
+        _toast(
+          ToastData(
+            title: '${_first(c.uid)} pediu BINGO!',
+            body: 'O host está conferindo a cartela.',
+            kind: ToastKind.bingo,
+          ),
+        );
+      } else if (c.status == ClaimStatus.rejected) {
+        _toast(
+          ToastData(
+            title: c.verdict == ClaimVerdict.wrongPattern
+                ? '${_first(c.uid)} errou a modalidade'
+                : '${_first(c.uid)} comeu bola',
+            body: 'O jogo continua.',
+            kind: ToastKind.miss,
+          ),
+        );
+      }
     }
     if (fresh && !first) onNewPendingClaim?.call();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_toasts.close());
+    super.dispose();
   }
 
   /// Text shown instead of the current ball while the host checks a BINGO
@@ -142,11 +187,24 @@ class PlayerGameController extends GameWatchController {
           for (final w in next.winners)
             if (w.prizeId == p.id) w,
         ];
-        if (ws.isNotEmpty) {
+        if (ws.isEmpty) continue;
+        // Own win: full overlay. Someone else's: a toast, so the screen
+        // stays free for the next ball.
+        if (ws.any((w) => w.uid == user?.uid)) {
           delivered = DeliveredPrize(
             prize: p,
             winners: ws,
             next: next.currentPrize,
+          );
+        } else {
+          _toast(
+            ToastData(
+              title:
+                  '${ws.map((w) => _first(w.uid)).join(' e ')} '
+                  '${ws.length > 1 ? 'ganharam' : 'ganhou'} ${p.label}',
+              body: modalityName(p),
+              kind: ToastKind.prize,
+            ),
           );
         }
       }

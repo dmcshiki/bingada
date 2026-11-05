@@ -7,6 +7,8 @@ import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/loading.dart';
 import 'package:tokingo/core/ui/widgets.dart';
+import 'package:tokingo/features/auth/domain/auth_repository.dart';
+import 'package:tokingo/features/game/data/access_checker.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/entities/prize.dart';
@@ -83,12 +85,42 @@ class _StreamPageState extends State<StreamPage> {
     super.dispose();
   }
 
+  /// Spectators follow the same access rule as players (the Firestore
+  /// rules enforce it; this only explains the refusal).
+  bool _denied(Game? g) {
+    if (g == null) {
+      final e = _c.error;
+      return e is GameFailure && e.code == GameFailureCode.accessDenied;
+    }
+    final u = sl<AuthRepository>().currentUser;
+    if (u == null) return true;
+    return u.uid != g.hostUid &&
+        !_c.players.any((p) => p.uid == u.uid) &&
+        !accessAllows(g.access, u.email);
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _c,
     builder: (context, _) {
       final bg = widget.chroma ? _chromaGreen : AppColors.navy;
       final g = _c.game;
+      if (_denied(g)) {
+        return Scaffold(
+          backgroundColor: bg,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Você não tem acesso a esta sala. Só assiste quem também '
+                'poderia entrar nela.',
+                textAlign: TextAlign.center,
+                style: AppText.body(22, color: AppColors.white),
+              ),
+            ),
+          ),
+        );
+      }
       if (g == null) {
         return Scaffold(
           backgroundColor: bg,
@@ -136,6 +168,7 @@ class _StreamPageState extends State<StreamPage> {
                     : _StreamBoard(
                         game: g,
                         players: _c.players,
+                        underdogAlive: _c.underdogAlive,
                         compact: widget.compact,
                       ),
               ),
@@ -155,10 +188,12 @@ class _StreamBoard extends StatelessWidget {
     required this.game,
     required this.players,
     this.compact = false,
+    this.underdogAlive,
   });
 
   final Game game;
   final List<Player> players;
+  final List<UserId>? underdogAlive;
   final bool compact;
 
   /// Design canvas of the wide layout; it is scaled to fit the viewport.
@@ -245,7 +280,12 @@ class _StreamBoard extends StatelessWidget {
     children: [
       _LastBalls(game: game, scale: 1),
       const SizedBox(height: 28),
-      _StreamPrizes(game: game, players: players, scale: 1),
+      _StreamPrizes(
+        game: game,
+        players: players,
+        scale: 1,
+        underdogAlive: underdogAlive,
+      ),
     ],
   );
 }
@@ -779,9 +819,11 @@ class _StreamPrizes extends StatelessWidget {
     required this.game,
     required this.players,
     required this.scale,
+    this.underdogAlive,
   });
 
   final Game game;
+  final List<UserId>? underdogAlive;
   final List<Player> players;
   final double scale;
 
@@ -814,7 +856,7 @@ class _StreamPrizes extends StatelessWidget {
       ),
       PrizeStatus.open => ('VALENDO', AppColors.cyan, AppColors.inkOnLight),
       PrizeStatus.underdog => (
-        'por eliminação',
+        underdogTag(underdogAlive),
         AppColors.white.withValues(alpha: .14),
         AppColors.white,
       ),
@@ -836,47 +878,66 @@ class _StreamPrizes extends StatelessWidget {
             : AppColors.white.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(16 * scale),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                style: AppText.body(16 * scale, color: AppColors.white),
-                children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text.rich(
                   TextSpan(
-                    text: p.label,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: AppText.body(16 * scale, color: AppColors.white),
+                    children: [
+                      TextSpan(
+                        text: p.label,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: ' · ${modalityName(p)}'),
+                    ],
                   ),
-                  TextSpan(text: ' · ${modalityName(p)}'),
-                ],
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(width: 10 * scale),
-          Flexible(
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 10 * scale,
-                vertical: 4 * scale,
-              ),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(10 * scale),
-              ),
-              child: Text(
-                tag,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.body(
-                  13 * scale,
-                  weight: FontWeight.w700,
-                  color: fg,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
+              SizedBox(width: 10 * scale),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10 * scale,
+                    vertical: 4 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(10 * scale),
+                  ),
+                  child: Text(
+                    tag,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(
+                      13 * scale,
+                      weight: FontWeight.w700,
+                      color: fg,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (st == PrizeStatus.underdog)
+            if (underdogNames(underdogAlive, players) case final names?)
+              Padding(
+                padding: EdgeInsets.only(top: 6 * scale),
+                child: Text(
+                  'Na disputa: $names',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.body(
+                    13 * scale,
+                    color: AppColors.white.withValues(alpha: .85),
+                  ),
+                ),
+              ),
         ],
       ),
     );

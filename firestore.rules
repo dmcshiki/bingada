@@ -23,6 +23,16 @@ service cloud.firestore {
         || (access.mode == 'allowlist' && email() in access.emails);
     }
 
+    // Who may see a game: the host, anyone holding a card, or anyone the
+    // room's access policy would let in (spectators of the stream too).
+    function canView(gameId, g) {
+      return signedIn() && (
+        g.hostUid == request.auth.uid
+        || exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid))
+        || ((g.access.mode == 'public' || verified()) && accessAllows(g.access))
+      );
+    }
+
     match /rooms/{roomCode} {
       allow read: if true;
       allow create: if signedIn()
@@ -37,7 +47,7 @@ service cloud.firestore {
     }
 
     match /games/{gameId} {
-      allow read: if signedIn();
+      allow read: if canView(gameId, resource.data);
 
       allow create: if signedIn()
         && request.resource.data.hostUid == request.auth.uid
@@ -127,7 +137,7 @@ service cloud.firestore {
       allow delete: if false;
 
       match /cards/{uid} {
-        allow read: if signedIn();
+        allow read: if canView(gameId, gameBefore(gameId));
         allow create: if verified()
           && request.auth.uid == uid
           // The host always plays in their own room (R7), whatever the policy.
@@ -143,7 +153,7 @@ service cloud.firestore {
       }
 
       match /players/{uid} {
-        allow read: if signedIn();
+        allow read: if canView(gameId, gameBefore(gameId));
         allow create: if verified()
           && request.auth.uid == uid
           && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(uid));
@@ -151,7 +161,7 @@ service cloud.firestore {
       }
 
       match /claims/{claimId} {
-        allow read: if signedIn();
+        allow read: if canView(gameId, gameBefore(gameId));
         allow create: if signedIn()
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.status == 'pending'

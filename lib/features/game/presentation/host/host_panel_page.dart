@@ -104,39 +104,6 @@ class _HostPanelPageState extends State<HostPanelPage> {
     return uid != null && _c.players.any((p) => p.uid == uid);
   }
 
-  Future<void> _openMyCard() => showDialog<void>(
-    context: context,
-    builder: (context) {
-      final size = MediaQuery.sizeOf(context);
-      return Dialog(
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: size.width * .05,
-          vertical: size.height * .05,
-        ),
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Stack(
-          children: [
-            Positioned.fill(child: PlayerGamePage(code: widget.code)),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton.filled(
-                tooltip: 'Fechar e voltar ao painel',
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.graphite,
-                  foregroundColor: AppColors.white,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
-              ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-
   Future<void> _confirmEnd() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -155,7 +122,12 @@ class _HostPanelPageState extends State<HostPanelPage> {
       if (g == null) {
         return const GameLoadingView(message: 'Sala não encontrada.');
       }
-      final board = _BoardPanel(game: g);
+      final board = _BoardPanel(
+        game: g,
+        myCard: _hostHasCard
+            ? PlayerGamePage(code: widget.code, embedded: true)
+            : null,
+      );
       final center = _DrawPanel(controller: _c, game: g, onEnd: _confirmEnd);
       final side = _SidePanel(controller: _c, game: g, onOpen: _openVerify);
       return Scaffold(
@@ -163,7 +135,7 @@ class _HostPanelPageState extends State<HostPanelPage> {
         body: SafeArea(
           child: Column(
             children: [
-              _HostHeader(game: g, onMyCard: _hostHasCard ? _openMyCard : null),
+              _HostHeader(game: g),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, box) {
@@ -222,12 +194,9 @@ class _HostPanelPageState extends State<HostPanelPage> {
 }
 
 class _HostHeader extends StatelessWidget {
-  const _HostHeader({required this.game, this.onMyCard});
+  const _HostHeader({required this.game});
 
   final Game game;
-
-  /// Opens the host's own card; null when the host has no card.
-  final VoidCallback? onMyCard;
 
   String get _access => switch (game.access) {
     DomainAccess(:final domains) =>
@@ -284,13 +253,6 @@ class _HostHeader extends StatelessWidget {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              if (onMyCard case final open?)
-                AppButton(
-                  label: 'minha cartela',
-                  height: 44,
-                  icon: Icons.grid_view_rounded,
-                  onPressed: open,
-                ),
               Pill(
                 label: _access,
                 color: AppColors.navy,
@@ -334,9 +296,12 @@ class _HostHeader extends StatelessWidget {
 }
 
 class _BoardPanel extends StatelessWidget {
-  const _BoardPanel({required this.game});
+  const _BoardPanel({required this.game, this.myCard});
 
   final Game game;
+
+  /// The host's own card (embedded player view), when they play.
+  final Widget? myCard;
 
   @override
   Widget build(BuildContext context) {
@@ -368,6 +333,12 @@ class _BoardPanel extends StatelessWidget {
               ],
             ),
           ),
+          if (myCard case final card?) ...[
+            const SizedBox(height: 24),
+            const SplitTitle('minha', 'cartela', size: 20),
+            const SizedBox(height: 12),
+            card,
+          ],
         ],
       ),
     );
@@ -433,16 +404,38 @@ class _DrawPanel extends StatelessWidget {
                               const SizedBox(height: 18),
                               SizedBox(
                                 height: 64,
-                                child: AppButton(
-                                  label: 'SORTEAR',
-                                  kind: AppButtonKind.light,
-                                  height: 64,
-                                  displayFont: true,
-                                  fontSize: 24,
-                                  onPressed: blocked != null || controller.busy
-                                      ? null
-                                      : () => unawaited(controller.draw()),
-                                ),
+                                child: controller.drawing
+                                    ? Semantics(
+                                        liveRegion: true,
+                                        label: 'Sorteando',
+                                        child: Container(
+                                          width: 190,
+                                          height: 64,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: const LoadingDots(
+                                            color: AppColors.navy,
+                                            dotSize: 12,
+                                          ),
+                                        ),
+                                      )
+                                    : AppButton(
+                                        label: 'SORTEAR',
+                                        kind: AppButtonKind.light,
+                                        height: 64,
+                                        displayFont: true,
+                                        fontSize: 24,
+                                        onPressed:
+                                            blocked != null || controller.busy
+                                            ? null
+                                            : () =>
+                                                  unawaited(controller.draw()),
+                                      ),
                               ),
                               if (blocked != null) ...[
                                 const SizedBox(height: 10),
@@ -489,10 +482,6 @@ class _DrawPanel extends StatelessWidget {
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                'Minha cartela',
-                style: AppText.body(14, weight: FontWeight.w700),
-              ),
               Wrap(
                 spacing: 12,
                 runSpacing: 10,
@@ -537,7 +526,11 @@ class _SidePanel extends StatelessWidget {
     children: [
       _ClaimsQueue(controller: controller, game: game, onOpen: onOpen),
       const SizedBox(height: 20),
-      _PrizeList(game: game, players: controller.players),
+      _PrizeList(
+        game: game,
+        players: controller.players,
+        underdogAlive: controller.underdogAlive,
+      ),
       const SizedBox(height: 20),
       _PlayersList(game: game, players: controller.players),
     ],
@@ -694,9 +687,14 @@ class ClaimQueueTile extends StatelessWidget {
 }
 
 class _PrizeList extends StatelessWidget {
-  const _PrizeList({required this.game, required this.players});
+  const _PrizeList({
+    required this.game,
+    required this.players,
+    this.underdogAlive,
+  });
 
   final Game game;
+  final List<UserId>? underdogAlive;
   final List<Player> players;
 
   @override
@@ -719,7 +717,7 @@ class _PrizeList extends StatelessWidget {
                 final status = switch (st) {
                   PrizeStatus.won => who,
                   PrizeStatus.open => 'valendo',
-                  PrizeStatus.underdog => 'eliminação',
+                  PrizeStatus.underdog => underdogTag(underdogAlive),
                   PrizeStatus.waiting => 'depois',
                 };
                 return Container(
@@ -751,6 +749,13 @@ class _PrizeList extends StatelessWidget {
                                 ),
                               ),
                               TextSpan(text: ' · ${modalityName(p)}'),
+                              if (st == PrizeStatus.underdog)
+                                if (underdogNames(underdogAlive, players)
+                                    case final names?)
+                                  TextSpan(
+                                    text: '\nNa disputa: $names',
+                                    style: AppText.body(12),
+                                  ),
                             ],
                           ),
                         ),

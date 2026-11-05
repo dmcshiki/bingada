@@ -8,6 +8,7 @@ import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/core/ui/app_theme.dart';
 import 'package:tokingo/core/ui/loading.dart';
 import 'package:tokingo/core/ui/sound/bingo_sound.dart';
+import 'package:tokingo/core/ui/toast.dart';
 import 'package:tokingo/core/ui/widgets.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
@@ -24,9 +25,12 @@ import 'package:tokingo/features/game/presentation/player/player_overlays.dart';
 
 /// 09 – player's game screen (also the host's own card, 11b).
 class PlayerGamePage extends StatefulWidget {
-  const PlayerGamePage({required this.code, super.key});
+  const PlayerGamePage({required this.code, super.key, this.embedded = false});
 
   final RoomCode code;
+
+  /// Host panel: only the card and BINGO; overlays still cover the screen.
+  final bool embedded;
 
   @override
   State<PlayerGamePage> createState() => _PlayerGamePageState();
@@ -61,6 +65,10 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
   void _onChange() {
     final g = _c.game;
     if (g == null || !mounted) return;
+    if (widget.embedded) {
+      _syncPortal();
+      return;
+    }
     if (_c.isFinished && !_navigated) {
       _navigated = true;
       context.go(AppRoutes.result(widget.code));
@@ -91,89 +99,155 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
 
   Future<void> _send() => _c.callBingo();
 
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
+  final _portal = OverlayPortalController();
+
+  bool get _hasOverlay =>
+      _c.delivered != null || _c.choiceClaim != null || _c.overlay != null;
+
+  void _syncPortal() {
+    if (_hasOverlay == _portal.isShowing) return;
+    // Toggling the portal during a build is not allowed.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _hasOverlay ? _portal.show() : _portal.hide();
+    });
+  }
+
+  List<Widget> _overlays(Game g) => [
+    if (_c.delivered case final d?)
+      PrizeDeliveredOverlay(
+        delivered: d,
+        game: g,
+        players: _c.players,
+        claims: _c.claims,
+        onClose: _c.dismissDelivered,
+      ),
+    if (_c.choiceClaim case final pick?)
+      ChoosePrizeOverlay(
+        claim: pick,
+        game: g,
+        players: _c.players,
+        claims: _c.claims,
+        busy: _c.choosing,
+        onChoose: _c.choose,
+        onRelease: _c.release,
+      )
+    else if (_c.overlay case final kind?)
+      ClaimResultOverlay(
+        kind: kind,
+        claim: _c.followedClaim,
+        game: g,
+        onClose: _c.dismissOverlay,
+      ),
+  ];
+
+  /// Host panel version: card + BINGO, overlays in the app overlay.
+  Widget _embedded(BuildContext context) => ListenableBuilder(
     listenable: _c,
     builder: (context, _) {
       final g = _c.game;
-      if (_c.loading) return const GameLoadingView();
-      if (g == null) {
-        return const GameLoadingView(message: 'Sala não encontrada.');
-      }
       final card = _c.card;
-      return AppPage(
-        blobs: const [
-          Positioned(
-            right: -180,
-            top: -220,
-            child: BlobShape(size: 560, color: AppColors.primary),
+      if (_c.loading || g == null || card == null) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Center(child: TokenLoader(label: 'Buscando sua cartela…')),
+        );
+      }
+      return OverlayPortal(
+        controller: _portal,
+        overlayChildBuilder: (context) => Positioned.fill(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Stack(children: _overlays(g)),
           ),
-          Positioned(
-            left: -200,
-            bottom: -320,
-            child: BlobShape(size: 520, color: AppColors.blob),
-          ),
-        ],
-        child: Stack(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Column(
-              children: [
-                _PlayerHeader(
-                  game: g,
-                  user: _c.user,
-                  isHost: _c.isHost,
-                  onHelp: () => setState(() => _help = true),
-                ),
-                Expanded(
-                  child: card == null
-                      ? const Center(
-                          child: TokenLoader(label: 'Buscando sua cartela…'),
-                        )
-                      : _PlayerBody(
-                          game: g,
-                          card: card,
-                          controller: _c,
-                          onBingo: _send,
-                        ),
-                ),
-              ],
+            PlayerCard(
+              game: g,
+              card: card,
+              marked: _c.marked,
+              onToggle: _c.toggle,
             ),
-            if (!_c.hostOnline) const HostOfflineBanner(),
-            if (_c.delivered case final d?)
-              PrizeDeliveredOverlay(
-                delivered: d,
-                game: g,
-                players: _c.players,
-                claims: _c.claims,
-                onClose: _c.dismissDelivered,
-              ),
-            if (_c.choiceClaim case final pick?)
-              ChoosePrizeOverlay(
-                claim: pick,
-                game: g,
-                players: _c.players,
-                claims: _c.claims,
-                busy: _c.choosing,
-                onChoose: _c.choose,
-                onRelease: _c.release,
-              )
-            else if (_c.overlay case final kind?)
-              ClaimResultOverlay(
-                kind: kind,
-                claim: _c.followedClaim,
-                game: g,
-                onClose: _c.dismissOverlay,
-              ),
-            if (_help)
-              HelpSidePanel(
-                game: g,
-                onClose: () => setState(() => _help = false),
-              ),
+            const SizedBox(height: 16),
+            _BingoWithError(
+              controller: _c,
+              onBingo: _send,
+              height: 60,
+              fontSize: 28,
+            ),
           ],
         ),
       );
     },
   );
+
+  @override
+  Widget build(BuildContext context) => widget.embedded
+      ? _embedded(context)
+      : ListenableBuilder(
+          listenable: _c,
+          builder: (context, _) {
+            final g = _c.game;
+            if (_c.loading) return const GameLoadingView();
+            if (g == null) {
+              return const GameLoadingView(message: 'Sala não encontrada.');
+            }
+            final card = _c.card;
+            return AppPage(
+              blobs: const [
+                Positioned(
+                  right: -180,
+                  top: -220,
+                  child: BlobShape(size: 560, color: AppColors.primary),
+                ),
+                Positioned(
+                  left: -200,
+                  bottom: -320,
+                  child: BlobShape(size: 520, color: AppColors.blob),
+                ),
+              ],
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      _PlayerHeader(
+                        game: g,
+                        user: _c.user,
+                        isHost: _c.isHost,
+                        onHelp: () => setState(() => _help = true),
+                      ),
+                      Expanded(
+                        child: card == null
+                            ? const Center(
+                                child: TokenLoader(
+                                  label: 'Buscando sua cartela…',
+                                ),
+                              )
+                            : _PlayerBody(
+                                game: g,
+                                card: card,
+                                controller: _c,
+                                onBingo: _send,
+                              ),
+                      ),
+                    ],
+                  ),
+                  if (!_c.hostOnline) const HostOfflineBanner(),
+                  ToastLayer(toasts: _c.toasts),
+                  ..._overlays(g),
+                  if (_help)
+                    HelpSidePanel(
+                      game: g,
+                      onClose: () => setState(() => _help = false),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
 }
 
 class _PlayerHeader extends StatelessWidget {
@@ -467,12 +541,15 @@ class _CurrentBall extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TokenBox(
+                  // The ball stays visible so nobody loses the call.
+                  BallToken(
+                    template: game.template,
+                    ball: game.currentBall,
                     size: size,
-                    color: AppColors.graphite,
-                    child: LoadingDots(dotSize: size * .1),
                   ),
                   const SizedBox(height: 12),
+                  LoadingDots(color: AppColors.navy, dotSize: wide ? 12 : 8),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: size + 40,
                     child: EllipsisText(
@@ -599,6 +676,7 @@ class PlayerCard extends StatelessWidget {
               if (i == free || id == null)
                 GridCell(
                   label: t.free.label,
+                  imageUrl: t.free.imageUrl,
                   background: AppColors.light,
                   semanticsLabel: 'Livre',
                 )

@@ -84,6 +84,7 @@ class StreamController extends GameWatchController {
   StreamController({
     required super.code,
     required super.repository,
+    super.trackUnderdog = true,
     VerifyClaim? verifyClaim,
     this._verifier = const BingoVerifier(),
     this.flashDuration = const Duration(seconds: 8),
@@ -109,6 +110,11 @@ class StreamController extends GameWatchController {
   void onGameChanged(Game? previous, Game next) {
     super.onGameChanged(previous, next);
     if (previous == null || next.status != GameStatus.running) return;
+    // A new ball clears the last result so the call is never covered.
+    if (next.draws.length > previous.draws.length && _flash != null) {
+      _flash = null;
+      _flashTimer?.cancel();
+    }
     final had = {for (final w in previous.winners) w.prizeId};
     for (final p in next.endOfGamePrizes) {
       if (p.pattern != PatternKind.underdog || had.contains(p.id)) continue;

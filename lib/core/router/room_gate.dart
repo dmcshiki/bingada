@@ -39,7 +39,13 @@ class _PlayerRoomGateState extends State<PlayerRoomGate> {
     final router = GoRouter.of(context);
     final code = widget.code;
     final user = sl<AuthRepository>().currentUser;
-    final game = await sl<GameRepository>().findByRoomCode(code);
+    final Game? game;
+    try {
+      game = await sl<GameRepository>().findByRoomCode(code);
+    } on GameFailure catch (f) {
+      router.go(AppRoutes.error(_errorKind(f.code), code: code));
+      return;
+    }
     if (game == null) {
       router.go(AppRoutes.error(ErrorKinds.invalidCode, code: code));
       return;

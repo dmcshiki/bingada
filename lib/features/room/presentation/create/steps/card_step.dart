@@ -442,6 +442,7 @@ class _Preview extends StatelessWidget {
                       for (final id in card.cells)
                         GridCell(
                           label: id == null ? t.free.label : t.item(id).label,
+                          imageUrl: id == null ? t.free.imageUrl : null,
                         ),
                     ],
                   ),

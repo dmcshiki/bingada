@@ -5,7 +5,9 @@ import 'package:tokingo/core/types/ids.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
+import 'package:tokingo/features/game/domain/entities/prize.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
+import 'package:tokingo/features/game/domain/services/underdog_calculator.dart';
 import 'package:tokingo/features/game/presentation/common/game_widgets.dart';
 
 /// Resolves a room code and keeps the game, players and claims live.
@@ -18,7 +20,51 @@ class GameWatchController extends ChangeNotifier {
     required this.code,
     required GameRepository repository,
     this._presence,
+    this.trackUnderdog = false,
   }) : _repo = repository;
+
+  /// Host and stream: keep [underdogAlive] live (reads the cards once).
+  final bool trackUnderdog;
+
+  /// Players still standing in the open azarão race; null when there is
+  /// no undecided azarão (or cards are not loaded yet).
+  List<UserId>? underdogAlive;
+  List<BingoCard>? _cards;
+  bool _cardsLoading = false;
+
+  void _refreshUnderdog(Game g) {
+    if (!trackUnderdog) return;
+    Prize? prize;
+    for (final p in g.endOfGamePrizes) {
+      if (p.pattern == PatternKind.underdog && !g.isWon(p.id)) prize = p;
+    }
+    if (prize == null || g.status != GameStatus.running) {
+      underdogAlive = null;
+      return;
+    }
+    final cards = _cards;
+    if (cards == null) {
+      if (_cardsLoading) return;
+      _cardsLoading = true;
+      unawaited(
+        _repo.getCards(g.id).then((c) {
+          _cards = c;
+          if (game case final now?) _refreshUnderdog(now);
+          notifyListeners();
+        }, onError: (Object _) => _cardsLoading = false),
+      );
+      return;
+    }
+    final out = const UnderdogCalculator().run(
+      cards: cards,
+      draws: g.draws,
+      underdogPrize: prize,
+      winners: g.winners,
+      policy: g.prizePolicy,
+      freeCellIndex: g.template.freeCellIndex,
+    );
+    underdogAlive = out.decided ? null : out.aliveIds;
+  }
 
   final RoomCode code;
   final GameRepository _repo;
@@ -54,6 +100,7 @@ class GameWatchController extends ChangeNotifier {
       game = found;
       loading = false;
       _scheduleIdle(found);
+      _refreshUnderdog(found);
       notifyListeners();
       _subs
         ..add(_repo.watchGame(found.id).listen(_onGame, onError: _onError))
@@ -104,6 +151,7 @@ class GameWatchController extends ChangeNotifier {
     final prev = game;
     game = g;
     _scheduleIdle(g);
+    _refreshUnderdog(g);
     onGameChanged(prev, g);
     notifyListeners();
   }

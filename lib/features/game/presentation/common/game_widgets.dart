@@ -258,9 +258,9 @@ class _BoardCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isCurrent
-        ? AppColors.cyan
-        : lit
+    // Current ball keeps its column color (cyan looked like the O column)
+    // and is marked by a ring instead.
+    final bg = isCurrent || lit
         ? color
         : dark
         ? AppColors.white.withValues(alpha: .10)
@@ -277,6 +277,12 @@ class _BoardCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(height * .27),
+        border: isCurrent
+            ? Border.all(
+                color: dark ? AppColors.white : AppColors.graphite,
+                width: 3,
+              )
+            : null,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),

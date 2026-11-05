@@ -412,7 +412,7 @@ class HelpSidePanel extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        const HowToPlayPanel(compact: true),
+                        const HowToPlayPanel(compact: true, showTitle: false),
                         if (current != null) ...[
                           const SizedBox(height: 18),
                           SectionCard(

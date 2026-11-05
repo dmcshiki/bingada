@@ -15,6 +15,7 @@ class HostPanelController extends GameWatchController {
   HostPanelController({
     required super.code,
     required super.repository,
+    super.trackUnderdog = true,
     required this._drawNext,
     required VerifyClaim verifyClaim,
     required ResolveClaim resolveClaim,
@@ -194,9 +195,22 @@ class HostPanelController extends GameWatchController {
 
   Future<void> draw() async {
     final g = game;
-    if (g == null || drawBlockedReason != null) return;
-    await _run(() => _drawNext(g));
+    if (g == null || drawBlockedReason != null || busy) return;
+    drawing = true;
+    // Short minimum so the press always gets visible feedback and fast
+    // double taps cannot queue a second ball.
+    await _run(
+      () => Future.wait([
+        _drawNext(g),
+        Future<void>.delayed(const Duration(milliseconds: 450)),
+      ]),
+    );
+    drawing = false;
+    super.notifyListeners();
   }
+
+  /// True while SORTEAR is running (button shows a loader).
+  bool drawing = false;
 
   Future<bool> reject(Claim claim) async {
     final g = game;

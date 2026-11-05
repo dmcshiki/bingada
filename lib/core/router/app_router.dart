@@ -17,12 +17,13 @@ import 'package:tokingo/features/room/presentation/create/create_room_page.dart'
 import 'package:tokingo/features/room/presentation/lobby_page.dart';
 import 'package:tokingo/features/stream/presentation/stream_page.dart';
 
-/// Routes reachable without signing in (spectators and auditors).
+/// Routes reachable without signing in (auditors). The stream needs a
+/// login: spectators follow the room's access rule.
 bool _isPublic(String path) =>
     path == AppRoutes.login ||
     path.startsWith('/verify/') ||
     path.startsWith('/error/') ||
-    RegExp(r'^/s/[^/]+/(stream|result)$').hasMatch(path);
+    RegExp(r'^/s/[^/]+/result$').hasMatch(path);
 
 /// Bridges the auth stream to go_router refreshes.
 final class _AuthRefresh extends ChangeNotifier {

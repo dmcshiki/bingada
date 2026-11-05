@@ -11,7 +11,11 @@ final class UnderdogOutcome {
     required this.survivors,
     required this.decidedAt,
     required this.alive,
+    this.aliveIds = const [],
   });
+
+  /// Who is still in the race (while not decided).
+  final List<UserId> aliveIds;
 
   /// True once there is a winner (or tied winners).
   final bool decided;
@@ -122,6 +126,7 @@ final class UnderdogCalculator {
       survivors: const [],
       decidedAt: null,
       alive: alive.length,
+      aliveIds: alive,
     );
   }
 }

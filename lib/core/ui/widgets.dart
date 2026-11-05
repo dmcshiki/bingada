@@ -348,9 +348,13 @@ class GridCell {
     this.stampRotation = 0,
     this.semanticsLabel,
     this.onTap,
+    this.imageUrl,
   });
 
   final String label;
+
+  /// Optional picture (free center); [label] is the fallback.
+  final String? imageUrl;
   final Color background;
   final Color foreground;
   final BorderSide border;
@@ -454,6 +458,19 @@ class _CellView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final long = cell.label.length > 4;
+    final text = Padding(
+      padding: const EdgeInsets.all(3),
+      child: Text(
+        cell.label,
+        textAlign: TextAlign.center,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: AppText.display(
+          long ? fontSize * .38 : fontSize,
+          color: cell.stamped ? AppColors.white : cell.foreground,
+        ),
+      ),
+    );
     return AspectRatio(
       aspectRatio: 1,
       child: Semantics(
@@ -488,19 +505,21 @@ class _CellView extends StatelessWidget {
                       ),
                     ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Text(
-                    cell.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.display(
-                      long ? fontSize * .38 : fontSize,
-                      color: cell.stamped ? AppColors.white : cell.foreground,
+                if (cell.imageUrl case final url? when url.isNotEmpty)
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.contain,
+                        // Hosts without CORS still render as an <img>.
+                        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                        errorBuilder: (_, _, _) => Center(child: text),
+                      ),
                     ),
-                  ),
-                ),
+                  )
+                else
+                  text,
               ],
             ),
           ),
