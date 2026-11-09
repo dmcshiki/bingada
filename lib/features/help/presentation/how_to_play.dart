@@ -77,8 +77,6 @@ class _HowToPlayPanelState extends State<HowToPlayPanel> {
             _CompactStep(step: s),
             const SizedBox(height: 12),
           ],
-          const SizedBox(height: 8),
-          const _Modalities(),
         ],
       );
     }
@@ -103,8 +101,6 @@ class _HowToPlayPanelState extends State<HowToPlayPanel> {
         ),
         const SizedBox(height: 22),
         _StepCard(step: step),
-        const SizedBox(height: 22),
-        const _Modalities(),
       ],
     );
   }
@@ -235,62 +231,6 @@ class _CompactStep extends StatelessWidget {
         ),
       ],
     ),
-  );
-}
-
-class _Modalities extends StatelessWidget {
-  const _Modalities();
-
-  static const _items = [
-    ('Horizontal', ': uma linha'),
-    ('Vertical', ': uma coluna'),
-    ('Diagonal', ''),
-    ('Cartela cheia', ': tudo'),
-    ('Azarão', ': o último a não ter nenhuma bola sorteada'),
-  ];
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        'Modalidades que podem valer',
-        style: AppText.body(14, weight: FontWeight.w700),
-      ),
-      const SizedBox(height: 10),
-      Wrap(
-        spacing: 14,
-        runSpacing: 14,
-        children: [
-          for (final (b, rest) in _items)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Text.rich(
-                  TextSpan(
-                    style: AppText.body(13, color: AppColors.graphite),
-                    children: [
-                      TextSpan(
-                        text: b,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      TextSpan(text: rest),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ],
   );
 }
 
