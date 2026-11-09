@@ -10,6 +10,7 @@ import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
+import 'package:tokingo/features/game/domain/services/nickname.dart';
 
 /// DEMO MODE [GameRepository]: whole state in a [KeyValueStore]
 /// (localStorage on web, so host / streamer / players can live in separate
@@ -212,6 +213,22 @@ final class LocalGameRepository implements GameRepository {
     _writeJson(_cardsKey(id), cards);
     _writeJson(_playersKey(id), players);
     _writeGame(game.copyWith(playerCount: game.playerCount + 1));
+  }
+
+  @override
+  Future<void> setNickname(GameId id, UserId uid, String nickname) async {
+    final n = Nickname.normalize(nickname);
+    if (Nickname.validate(n) != null) {
+      throw const GameFailure(GameFailureCode.accessDenied, 'apelido');
+    }
+    if (_requireGame(id).status != GameStatus.lobby) {
+      throw const GameFailure(GameFailureCode.alreadyStarted);
+    }
+    final players = _readColl(_playersKey(id));
+    final p = players[uid.value];
+    if (p == null) return;
+    players[uid.value] = {...p, 'displayName': n};
+    _writeJson(_playersKey(id), players);
   }
 
   // ---------------------------------------------------------------- play

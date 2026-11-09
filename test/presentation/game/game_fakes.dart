@@ -191,6 +191,9 @@ class FakeRepo implements GameRepository {
   }) async {}
 
   @override
+  Future<void> setNickname(GameId id, UserId uid, String nickname) async {}
+
+  @override
   Future<void> start(GameId id, {required String cardsHash}) async {}
 }
 

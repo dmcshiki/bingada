@@ -11,6 +11,7 @@ import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/help/presentation/how_to_play.dart';
 import 'package:tokingo/features/room/presentation/room_common.dart';
+import 'package:tokingo/features/room/presentation/waiting/nickname_editor.dart';
 import 'package:tokingo/features/room/presentation/waiting/room_watch_controller.dart';
 
 /// 08 – Sala de espera do jogador. Navigates to play/result on status change.
@@ -24,7 +25,7 @@ class PlayerWaitingPage extends StatefulWidget {
 }
 
 class _PlayerWaitingPageState extends State<PlayerWaitingPage> {
-  late final _c = RoomWatchController(widget.code)
+  late final _c = RoomWatchController(widget.code, watchPlayers: true)
     ..addListener(_onChange)
     ..load();
   bool _left = false;
@@ -63,9 +64,21 @@ class _PlayerWaitingPageState extends State<PlayerWaitingPage> {
       final g = _c.game;
       if (g == null) return const LoadingView();
       final narrow = isNarrow(context);
-      final name =
-          sl<AuthRepository>().currentUser?.displayName.split(' ').first ?? '';
-      final info = _Info(game: g, name: name, narrow: narrow);
+      final user = sl<AuthRepository>().currentUser;
+      final mine = _c.players.where((p) => p.uid == user?.uid).firstOrNull;
+      final name = mine?.displayName ?? '';
+      final info = _Info(
+        game: g,
+        name: name,
+        narrow: narrow,
+        nickname: user == null || g.status != GameStatus.lobby
+            ? null
+            : NicknameEditor(
+                gameId: g.id,
+                uid: user.uid,
+                current: mine?.displayName,
+              ),
+      );
       final card = _BlurredCard(
         cols: g.template.cols,
         rows: g.template.rows,
@@ -156,7 +169,14 @@ class _Header extends StatelessWidget {
 }
 
 class _Info extends StatelessWidget {
-  const _Info({required this.game, required this.name, required this.narrow});
+  const _Info({
+    required this.game,
+    required this.name,
+    required this.narrow,
+    this.nickname,
+  });
+
+  final Widget? nickname;
 
   final Game game;
   final String name;
@@ -196,6 +216,13 @@ class _Info extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
+        if (nickname case final n?) ...[
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: n,
+          ),
+          const SizedBox(height: 22),
+        ],
         Wrap(
           spacing: 12,
           runSpacing: 12,

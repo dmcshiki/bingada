@@ -52,6 +52,9 @@ abstract interface class GameRepository {
     required BingoCard card,
   });
 
+  /// Changes the player's own nickname while the room is in the lobby.
+  Future<void> setNickname(GameId id, UserId uid, String nickname);
+
   /// lobby → running, publishes [cardsHash].
   Future<void> start(GameId id, {required String cardsHash});
 

@@ -8,6 +8,7 @@ export 'audit_service.dart';
 export 'bingo_verifier.dart';
 export 'card_generator.dart';
 export 'draw_sequence.dart';
+export 'nickname.dart';
 export 'pattern_detector.dart';
 export 'penalty_evaluator.dart';
 export 'prize_policy_evaluator.dart';

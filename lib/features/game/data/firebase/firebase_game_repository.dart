@@ -8,6 +8,7 @@ import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
+import 'package:tokingo/features/game/domain/services/nickname.dart';
 
 /// Stores dates as Firestore [Timestamp]s.
 final class TimestampDateCodec implements DateCodec {
@@ -141,6 +142,19 @@ final class FirebaseGameRepository implements GameRepository {
     final q = await _game(id).collection('cards').get();
     return [for (final d in q.docs) _map.cardFromMap(d.id, d.data())];
   });
+
+  @override
+  Future<void> setNickname(GameId id, UserId uid, String nickname) =>
+      _guard(() async {
+        final n = Nickname.normalize(nickname);
+        if (Nickname.validate(n) != null) {
+          throw const GameFailure(GameFailureCode.accessDenied, 'apelido');
+        }
+        await _game(id)
+            .collection('players')
+            .doc(uid.value)
+            .update({'displayName': n});
+      });
 
   @override
   Future<void> join(

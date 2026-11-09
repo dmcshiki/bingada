@@ -91,7 +91,7 @@ final class JoinGame {
       game.id,
       player: Player(
         uid: user.uid,
-        displayName: user.displayName,
+        displayName: Nickname.fromName(user.displayName),
         photoUrl: user.photoUrl,
         joinedAt: DateTime.now().toUtc(),
       ),

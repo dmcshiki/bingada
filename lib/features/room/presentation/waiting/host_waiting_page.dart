@@ -12,6 +12,7 @@ import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
 import 'package:tokingo/features/room/presentation/room_common.dart';
+import 'package:tokingo/features/room/presentation/waiting/nickname_editor.dart';
 import 'package:tokingo/features/room/presentation/waiting/open_tab.dart';
 import 'package:tokingo/features/room/presentation/waiting/room_watch_controller.dart';
 
@@ -89,6 +90,17 @@ class _HostWaitingPageState extends State<HostWaitingPage> {
             starting: _starting,
             onStart: g.status == GameStatus.lobby && !_starting ? _start : null,
           ),
+          if (g.status == GameStatus.lobby) ...[
+            const SizedBox(height: 20),
+            NicknameEditor(
+              gameId: g.id,
+              uid: g.hostUid,
+              current: _c.players
+                  .where((p) => p.uid == g.hostUid)
+                  .firstOrNull
+                  ?.displayName,
+            ),
+          ],
           const SizedBox(height: 20),
           _PlayersGrid(players: _c.players, total: g.playerCount),
         ],

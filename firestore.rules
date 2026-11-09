@@ -154,10 +154,25 @@ service cloud.firestore {
 
       match /players/{uid} {
         allow read: if canView(gameId, gameBefore(gameId));
+        // Nickname: 2-20 common characters (letters with accents, digits,
+        // space, dot, dash, underscore). Same rule as Nickname in the app.
+        function nicknameOk(n) {
+          return n is string && n.size() >= 2 && n.size() <= 20
+            && n.matches('^[\\p{L}\\p{N} ._-]+$')
+            && n == n.trim();
+        }
         allow create: if verified()
           && request.auth.uid == uid
+          && nicknameOk(request.resource.data.displayName)
           && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(uid));
-        allow update, delete: if false;
+        // Own nickname only, and only before the game starts.
+        allow update: if verified()
+          && request.auth.uid == uid
+          && gameBefore(gameId).status == 'lobby'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['displayName'])
+          && nicknameOk(request.resource.data.displayName);
+        allow delete: if false;
       }
 
       match /claims/{claimId} {

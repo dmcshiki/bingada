@@ -218,6 +218,9 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
                       _PlayerHeader(
                         game: g,
                         user: _c.user,
+                        nickname: _c.user == null
+                            ? null
+                            : playerName(_c.players, _c.user!.uid),
                         isHost: _c.isHost,
                         onHelp: () => setState(() => _help = true),
                       ),
@@ -258,10 +261,12 @@ class _PlayerHeader extends StatelessWidget {
     required this.user,
     required this.isHost,
     required this.onHelp,
+    this.nickname,
   });
 
   final Game game;
   final AppUser? user;
+  final String? nickname;
   final bool isHost;
   final VoidCallback onHelp;
 
@@ -302,7 +307,8 @@ class _PlayerHeader extends StatelessWidget {
               ],
               _HelpButton(onPressed: onHelp),
               const SizedBox(width: 12),
-              if (user case final u?) _UserChip(user: u, compact: narrow),
+              if (user case final u?)
+                _UserChip(user: u, name: nickname, compact: narrow),
             ],
           ),
           if (narrow) ...[
@@ -387,9 +393,12 @@ class _HelpButton extends StatelessWidget {
 }
 
 class _UserChip extends StatelessWidget {
-  const _UserChip({required this.user, required this.compact});
+  const _UserChip({required this.user, required this.compact, this.name});
 
   final AppUser user;
+
+  /// Nickname in this room (falls back to the account first name).
+  final String? name;
   final bool compact;
 
   @override
@@ -410,7 +419,10 @@ class _UserChip extends StatelessWidget {
           ),
           if (!compact) ...[
             const SizedBox(width: 12),
-            Text(user.displayName.split(' ').first, style: AppText.body(14)),
+            Text(
+              name ?? user.displayName.split(' ').first,
+              style: AppText.body(14),
+            ),
           ],
         ],
       ),
