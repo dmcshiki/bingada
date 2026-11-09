@@ -293,6 +293,21 @@ class _UnderdogRow extends StatelessWidget {
               ],
             ),
           ),
+          if (c.underdog)
+            SizedBox(
+              width: 260,
+              child: FieldLabel(
+                label: 'Prêmio',
+                size: 12,
+                gap: 4,
+                child: DraftField(
+                  initial: c.underdogLabel,
+                  height: 40,
+                  semanticsLabel: 'Nome do prêmio do azarão',
+                  onChanged: (v) => c.update(() => c.underdogLabel = v),
+                ),
+              ),
+            ),
           MergeSemantics(
             child: Row(
               mainAxisSize: MainAxisSize.min,

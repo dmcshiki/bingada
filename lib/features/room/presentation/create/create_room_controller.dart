@@ -118,6 +118,7 @@ class CreateRoomController extends ChangeNotifier {
     PrizeDraft(label: 'Fone bluetooth', pattern: PatternKind.full),
   ];
   bool underdog = true;
+  String underdogLabel = 'Caixa de bombom';
   int? maxPerPlayer = 1;
 
   /// Key "r-c": r = index of the winner's prize, c = index among
@@ -427,6 +428,9 @@ class CreateRoomController extends ChangeNotifier {
 
   String? get prizesError {
     if (prizes.isEmpty) return 'Adicione pelo menos um prêmio.';
+    if (underdog && underdogLabel.trim().isEmpty) {
+      return 'Dê um nome ao prêmio do azarão.';
+    }
     if (prizes.any((p) => p.label.trim().isEmpty)) {
       return 'Dê um nome a cada prêmio.';
     }
@@ -449,9 +453,9 @@ class CreateRoomController extends ChangeNotifier {
 
   List<Prize> get builtEndPrizes => [
     if (underdog)
-      const Prize(
-        id: PrizeId('u1'),
-        label: 'A definir',
+      Prize(
+        id: const PrizeId('u1'),
+        label: underdogLabel.trim(),
         pattern: PatternKind.underdog,
       ),
   ];
@@ -634,6 +638,12 @@ class CreateRoomController extends ChangeNotifier {
       prizes.add(PrizeDraft(label: '', pattern: PatternKind.horizontal));
     }
     underdog = g.endOfGamePrizes.any((p) => p.pattern == PatternKind.underdog);
+    underdogLabel =
+        g.endOfGamePrizes
+            .where((p) => p.pattern == PatternKind.underdog)
+            .firstOrNull
+            ?.label ??
+        underdogLabel;
     maxPerPlayer = g.prizePolicy.maxPerPlayer;
     _allow.clear();
     for (var r = 0; r < prizes.length; r++) {
