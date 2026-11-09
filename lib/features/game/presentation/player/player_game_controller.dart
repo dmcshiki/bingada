@@ -154,7 +154,7 @@ class PlayerGameController extends GameWatchController {
           ToastData(
             title: c.verdict == ClaimVerdict.wrongPattern
                 ? '${_first(c.uid)} errou a modalidade'
-                : '${_first(c.uid)} comeu bola',
+                : '${_first(c.uid)} gritou BINGO errado',
             body: 'O jogo continua.',
             kind: ToastKind.miss,
           ),
@@ -297,7 +297,7 @@ class PlayerGameController extends GameWatchController {
       final left = block.drawsLeft;
       return left == null
           ? 'BINGO BLOQUEADO · ${block.reason.toUpperCase()}'
-          : 'BINGO BLOQUEADO · VOLTA EM $left ${left == 1 ? 'BOLA' : 'BOLAS'}';
+          : 'BINGO BLOQUEADO · VOLTA EM $left ${left == 1 ? 'NÚMERO' : 'NÚMEROS'}';
     }
     if (g.status != GameStatus.running) return 'O jogo não está em andamento';
     return null;

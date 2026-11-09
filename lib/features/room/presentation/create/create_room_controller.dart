@@ -451,7 +451,7 @@ class CreateRoomController extends ChangeNotifier {
     if (underdog)
       const Prize(
         id: PrizeId('u1'),
-        label: 'Prêmio azarão',
+        label: 'A definir',
         pattern: PatternKind.underdog,
       ),
   ];

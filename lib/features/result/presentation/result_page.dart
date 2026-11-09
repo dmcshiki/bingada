@@ -240,7 +240,7 @@ class ResultView extends StatelessWidget {
             children: [
               const Wordmark(size: 28, color: AppColors.white),
               Text(
-                '${game.eventName} · ${game.status == GameStatus.abandoned ? 'encerrado pelo host' : 'encerrado'} na bola ${game.draws.length}',
+                '${game.eventName} · ${game.status == GameStatus.abandoned ? 'encerrado pelo host' : 'encerrado'} no ${game.draws.length}º número',
                 style: AppText.body(15, color: AppColors.white),
               ),
             ],
@@ -340,7 +340,6 @@ class ResultView extends StatelessWidget {
   String _how(Prize p, Winner w, {required bool ends}) {
     final parts = [
       modalityName(p),
-      ballOrdinal(w.drawIndex),
       if (w.tieBreak) 'venceu o desempate',
       if (ends) 'encerrou o jogo',
     ];
@@ -415,7 +414,7 @@ class _UnderdogBox extends StatelessWidget {
   /// Azarão by elimination: the winner survived up to [Winner.drawIndex].
   String _detail(Winner w) {
     final n = w.drawIndex;
-    final balls = n == 1 ? '1 bola' : '$n bolas';
+    final balls = n == 1 ? '1 número' : '$n números';
     if (w.tieBreak) {
       return 'Saiu junto com outros na mesma rodada, depois de $balls, '
           'e venceu o sorteio de desempate.';

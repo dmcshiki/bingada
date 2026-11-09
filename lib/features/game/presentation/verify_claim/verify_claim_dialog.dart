@@ -127,7 +127,7 @@ class _VerifyClaimDialogState extends State<VerifyClaimDialog> {
   );
 }
 
-enum _CellState { inPattern, drawn, markedNotDrawn, neutral }
+enum _CellState { inPattern, drawn, eaten, markedNotDrawn, neutral }
 
 class _VerifyCardView extends StatelessWidget {
   const _VerifyCardView({
@@ -219,7 +219,8 @@ class _VerifyCardView extends StatelessWidget {
       )) {
         (true, true, true) => _CellState.inPattern,
         (false, true, _) when !isFree => _CellState.markedNotDrawn,
-        (true, _, _) => _CellState.drawn,
+        (true, true, _) => _CellState.drawn,
+        (true, false, _) => _CellState.eaten,
         _ => _CellState.neutral,
       };
       final base = isFree ? t.free.label : t.item(id).label;
@@ -237,7 +238,14 @@ class _VerifyCardView extends StatelessWidget {
           background: const Color(0xFFDCE6F4),
           foreground: AppColors.navy,
           border: AppColors.light,
-          semanticsLabel: '$name, saiu${marked.contains(i) ? ', marcado' : ''}',
+          semanticsLabel: '$name, marcou e saiu',
+        ),
+        _CellState.eaten => _VerifyCell(
+          label: base,
+          background: const Color(0xFFFDE3CC),
+          foreground: const Color(0xFF9A4A0B),
+          border: const Color(0xFFE8833A),
+          semanticsLabel: '$name, saiu e comeu bola',
         ),
         _CellState.markedNotDrawn => _VerifyCell(
           label: '$base✕',
@@ -286,7 +294,16 @@ class _VerifyCardView extends StatelessWidget {
               color: Color(0xFF2E7D3A),
               text: 'marcou e saiu (no padrão)',
             ),
-            _Legend(symbol: '●', color: Color(0xFF4F86C6), text: 'saiu'),
+            _Legend(
+              symbol: '●',
+              color: Color(0xFF4F86C6),
+              text: 'marcou e saiu',
+            ),
+            _Legend(
+              symbol: '●',
+              color: Color(0xFFE8833A),
+              text: 'saiu e comeu bola',
+            ),
             _Legend(
               symbol: '✕',
               color: AppColors.purple,
@@ -421,16 +438,16 @@ class _VerifyInfo extends StatelessWidget {
     final (vBg, vTitle) = switch (r?.verdict) {
       null => (AppColors.graphite, 'CONFERINDO…'),
       ClaimVerdict.valid => (AppColors.greenDark, 'BINGO VÁLIDO'),
-      ClaimVerdict.missed => (AppColors.purple, 'COMEU BOLA'),
+      ClaimVerdict.missed => (AppColors.purple, 'BINGO ERRADO'),
       ClaimVerdict.wrongPattern => (AppColors.purple, 'MODALIDADE ERRADA'),
       ClaimVerdict.notEligible => (AppColors.graphite, 'NÃO ELEGÍVEL'),
       ClaimVerdict.penalized => (AppColors.graphite, 'PENALIZADO'),
       ClaimVerdict.tampered => (AppColors.graphite, 'CARTELA ADULTERADA'),
     };
     final vSub = r == null
-        ? 'Recalculando a cartela e as bolas até o grito.'
+        ? 'Recalculando a cartela e os números até o grito.'
         : ok
-        ? '$kind completa com as ${claim.drawIndex} bolas que tinham saído.'
+        ? '$kind completa com os ${claim.drawIndex} números que tinham saído.'
         : r.reason;
     final tampered = r?.verdict == ClaimVerdict.tampered;
     final ballNow = game.currentBall == null
@@ -458,10 +475,7 @@ class _VerifyInfo extends StatelessWidget {
                     TextSpan(
                       style: AppText.body(14),
                       children: [
-                        TextSpan(
-                          text:
-                              'gritou BINGO na ${ballOrdinal(claim.drawIndex)} · valendo ',
-                        ),
+                        TextSpan(text: 'gritou BINGO · valendo '),
                         TextSpan(
                           text: prize?.label ?? '—',
                           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -525,14 +539,14 @@ class _VerifyInfo extends StatelessWidget {
         _CheckRow(
           ok: true,
           text:
-              'Conferido com as ${claim.drawIndex} bolas que tinham saído quando gritou',
+              'Conferido com os ${claim.drawIndex} números que tinham saído quando gritou',
         ),
         const SizedBox(height: 22),
         if (others.isEmpty || !ok) ...[
           Text(
             ok
-                ? 'Outros jogadores ainda podem gritar BINGO nesta bola$ballNow até você sortear a próxima. Por enquanto, ninguém mais gritou.'
-                : 'Outros jogadores ainda podem gritar BINGO nesta bola$ballNow até você sortear a próxima.',
+                ? 'Outros jogadores ainda podem gritar BINGO neste número$ballNow até você sortear o próximo. Por enquanto, ninguém mais gritou.'
+                : 'Outros jogadores ainda podem gritar BINGO neste número$ballNow até você sortear o próximo.',
             style: AppText.body(13),
           ),
           const SizedBox(height: 10),
@@ -642,7 +656,7 @@ class _TieBlock extends StatelessWidget {
                 ),
                 TextSpan(
                   text:
-                      ' também ${others.length > 1 ? 'gritaram' : 'gritou'} um BINGO válido ($how) na mesma bola$ball. '
+                      ' também ${others.length > 1 ? 'gritaram' : 'gritou'} um BINGO válido ($how) no mesmo número$ball. '
                       '${fewest ? 'Pela regra da sala, leva quem tem menos prêmios; se ainda empatar, há sorteio.' : 'Pela regra da sala, o prêmio vai para sorteio.'}',
                 ),
               ],

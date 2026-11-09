@@ -181,8 +181,11 @@ class ChoosePrizeOverlay extends StatelessWidget {
             c.prizeId == claim.prizeId &&
             c.drawIndex == claim.drawIndex &&
             c.uid != claim.uid &&
-            (c.status == ClaimStatus.pending ||
-                c.status == ClaimStatus.awaitingChoice))
+            (c.verdict == null || c.verdict == ClaimVerdict.valid) &&
+            (c.status == ClaimStatus.tied ||
+                c.status == ClaimStatus.awaitingChoice ||
+                (c.status == ClaimStatus.pending &&
+                    c.verdict == ClaimVerdict.valid)))
           playerName(players, c.uid).split(' ').first,
     ];
     final held = _policy.heldBy(claim.uid, game.winners);
@@ -205,10 +208,18 @@ class ChoosePrizeOverlay extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              Text(
-                'EMPATE NO ${prize?.label.toUpperCase() ?? 'PRÊMIO'}!',
+              Text.rich(
+                TextSpan(
+                  style: AppText.display(30, color: AppColors.navy),
+                  children: [
+                    const TextSpan(text: 'EMPATE NO\n'),
+                    TextSpan(
+                      text: '${prize?.label.toUpperCase() ?? 'PRÊMIO'}!',
+                      style: const TextStyle(color: AppColors.primary),
+                    ),
+                  ],
+                ),
                 textAlign: TextAlign.center,
-                style: AppText.display(30, color: AppColors.navy),
               ),
               const SizedBox(height: 12),
               ConstrainedBox(

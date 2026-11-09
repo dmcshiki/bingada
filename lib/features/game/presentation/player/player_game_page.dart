@@ -13,7 +13,6 @@ import 'package:tokingo/core/ui/widgets.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
-import 'package:tokingo/features/game/domain/entities/prize.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
 import 'package:tokingo/features/game/domain/services/penalty_evaluator.dart';
 import 'package:tokingo/features/game/domain/usecases/usecases.dart';
@@ -83,7 +82,9 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
     final ball = g.currentBall;
     if (ball != null && ball != _lastBall) {
       if (_lastBall != null || g.draws.length == 1) {
-        unawaited(announce(context, 'Nova bola: ${g.template.ballText(ball)}'));
+        unawaited(
+          announce(context, 'Novo número: ${g.template.ballText(ball)}'),
+        );
       }
       _lastBall = ball;
     }
@@ -572,7 +573,7 @@ class _CurrentBall extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SplitTitle('bola', 'atual', size: 26),
+          const SplitTitle('número', 'atual', size: 26),
           const SizedBox(height: 24),
           token,
         ],
@@ -585,7 +586,7 @@ class _CurrentBall extends StatelessWidget {
         const Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: SplitTitle('bola', 'atual', size: 26),
+            child: SplitTitle('número', 'atual', size: 26),
           ),
         ),
         const SizedBox(width: 20),
@@ -815,13 +816,15 @@ class PrizeSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final open = game.openPrizes;
     final all = game.displayPrizes;
+    final open = [
+      for (final p in all)
+        if (prizeStatus(game, p) case PrizeStatus.open || PrizeStatus.underdog)
+          p,
+    ];
     final next = [
       for (final p in all)
-        if (prizeStatus(game, p)
-            case PrizeStatus.waiting || PrizeStatus.underdog)
-          p,
+        if (prizeStatus(game, p) == PrizeStatus.waiting) p,
     ];
     final won = [
       for (final p in all)
@@ -878,9 +881,7 @@ class PrizeSidebar extends StatelessWidget {
                 for (final p in next) ...[
                   const SizedBox(height: 8),
                   Text(
-                    p.pattern == PatternKind.underdog
-                        ? '${p.label} · por eliminação, durante o jogo'
-                        : '${p.label} · ${modalityName(p)}',
+                    '${p.label} · ${modalityName(p)}',
                     style: AppText.body(14),
                   ),
                 ],

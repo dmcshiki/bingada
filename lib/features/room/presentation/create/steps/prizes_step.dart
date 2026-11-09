@@ -59,7 +59,7 @@ class _PrizeList extends StatelessWidget {
         const SplitTitle('defina os', 'prêmios'),
         const SizedBox(height: 16),
         Text(
-          'Os prêmios de padrão (horizontal, vertical…) valem ao mesmo tempo, e as bolas sorteadas continuam valendo entre um e outro. A cartela cheia vale só depois que todos saírem; o jogo termina quando ela sai.',
+          'Os prêmios de padrão (horizontal, vertical…) valem ao mesmo tempo, e os números sorteados continuam valendo entre um e outro. A cartela cheia vale só depois que todos saírem; o jogo termina quando ela sai.',
           style: AppText.body(14),
         ),
         for (var i = 0; i < c.prizes.length; i++) ...[
@@ -288,7 +288,7 @@ class _UnderdogRow extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 TextSpan(
-                  text: ' · a cada bola, sai quem tem o número na cartela (marcou ou não). O último que sobrar leva',
+                  text: ' · a cada número, sai quem tem o número na cartela (marcou ou não). O último que sobrar leva',
                 ),
               ],
             ),

@@ -93,8 +93,14 @@ class _PlayerWaitingPageState extends State<PlayerWaitingPage> {
                         children: [info, const SizedBox(height: 24), card],
                       )
                     : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(child: info),
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 560),
+                              child: info,
+                            ),
+                          ),
                           const SizedBox(width: 40),
                           SizedBox(width: 520, child: card),
                         ],
@@ -172,7 +178,7 @@ class _Info extends StatelessWidget {
                 height: 1.1,
               ),
               children: [
-                const TextSpan(text: 'tudo pronto,\n'),
+                const TextSpan(text: 'Tudo pronto,\n'),
                 TextSpan(
                   text: name.isEmpty ? 'jogador!' : '$name!',
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -185,7 +191,7 @@ class _Info extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Text(
-            'Sua cartela já foi gerada e é só sua: abra em outro dispositivo e ela continua igual. Aguarde o host começar. Quem não entrar até lá fica de fora desta partida.',
+            'Sua cartela já está separada. Se trocar de aparelho, ela vem junto. Agora é só esperar o host começar a partida.',
             style: AppText.body(18, height: 1.5),
           ),
         ),

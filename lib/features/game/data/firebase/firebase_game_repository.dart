@@ -210,7 +210,7 @@ final class FirebaseGameRepository implements GameRepository {
       if (game.raffle case final r? when r.winner == null) {
         throw const GameFailure(
           GameFailureCode.pendingClaims,
-          'Faça o sorteio pendente antes da próxima bola.',
+          'Faça o sorteio pendente antes do próximo número.',
         );
       }
       if (game.draws.length != before.draws.length) {

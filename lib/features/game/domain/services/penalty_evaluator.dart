@@ -37,7 +37,7 @@ final class PenaltyEvaluator {
     final elapsed = current - last;
     return elapsed < n
         ? PenaltyBlock(
-            reason: 'Bloqueado por comer bola',
+            reason: 'Bloqueado por BINGO errado',
             drawsLeft: n - elapsed,
           )
         : null;

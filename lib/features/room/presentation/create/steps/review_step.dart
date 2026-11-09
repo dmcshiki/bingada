@@ -61,26 +61,26 @@ class ReviewStep extends StatelessWidget {
             ),
           ),
           _RuleRow(
-            title: 'Penalidade por comer bola',
+            title: 'Penalidade por BINGO errado',
             desc: c.penaltyDraws == 0
                 ? 'Por enquanto o grito errado só não vale e o jogo segue.'
-                : 'Quem gritar errado fica ${c.penaltyDraws} ${c.penaltyDraws == 1 ? 'bola' : 'bolas'} sem poder gritar.',
+                : 'Quem gritar errado fica ${c.penaltyDraws} ${c.penaltyDraws == 1 ? 'número' : 'números'} sem poder gritar.',
             control: DraftDropdown<int>(
-              semanticsLabel: 'Penalidade por comer bola',
+              semanticsLabel: 'Penalidade por BINGO errado',
               value: c.penaltyDraws,
               items: [
                 (0, 'Nenhuma'),
                 for (final n in _penaltyOptions)
-                  (n, 'Pular $n ${n == 1 ? 'bola' : 'bolas'}'),
+                  (n, 'Pular $n ${n == 1 ? 'número' : 'números'}'),
               ],
               onChanged: (v) => c.update(() => c.penaltyDraws = v),
             ),
           ),
           _RuleRow(
-            title: 'Mostrar “comeu bola” na transmissão',
+            title: 'Mostrar BINGO errado na transmissão',
             desc: 'A vergonha pública opcional.',
             control: DraftDropdown<bool>(
-              semanticsLabel: 'Mostrar comeu bola na transmissão',
+              semanticsLabel: 'Mostrar BINGO errado na transmissão',
               value: c.showFailsOnStream,
               items: const [(true, 'Mostrar'), (false, 'Esconder')],
               onChanged: (v) => c.update(() => c.showFailsOnStream = v),
@@ -89,7 +89,7 @@ class ReviewStep extends StatelessWidget {
           _RuleRow(
             title: 'Empate no mesmo prêmio',
             desc:
-                'Dois ou mais gritos válidos na mesma bola. Só uma pessoa leva; '
+                'Dois ou mais gritos válidos no mesmo número. Só uma pessoa leva; '
                 'em "menos prêmios", se ainda empatar, há sorteio.',
             control: DraftDropdown<TieBreakRule>(
               semanticsLabel: 'Empate no mesmo prêmio',
@@ -102,7 +102,7 @@ class ReviewStep extends StatelessWidget {
             _RuleRow(
               title: 'Desempate do azarão',
               desc:
-                  'Os últimos que sobraram saíram na mesma bola. Só uma pessoa '
+                  'Os últimos que sobraram saíram no mesmo número. Só uma pessoa '
                   'leva; em "menos prêmios", se ainda empatar, há sorteio.',
               control: DraftDropdown<TieBreakRule>(
                 semanticsLabel: 'Desempate do azarão',

@@ -61,7 +61,7 @@ class ClaimResultOverlay extends StatelessWidget {
         const Color(0xFF123B19),
         const Color(0xFF2E7D3A),
         'VOCÊ GANHOU!',
-        '${prize == null ? how : modalityName(prize)}, na ${ballOrdinal(claim?.drawIndex ?? 0)}. Prêmio: ${prize?.label ?? ''}. '
+        '${prize == null ? how : modalityName(prize)}. Prêmio: ${prize?.label ?? ''}. '
             'O jogo segue valendo o próximo prêmio.',
         'Continuar jogando',
       ),
@@ -71,8 +71,8 @@ class ClaimResultOverlay extends StatelessWidget {
         AppColors.purple,
         AppColors.white,
         AppColors.purple,
-        'COMEU BOLA',
-        'Você marcou bola que ainda não saiu, ou a cartela não fechou. '
+        'BINGO ERRADO',
+        'Você marcou número que ainda não saiu, ou a cartela não fechou. '
             'Esse grito não valeu, mas o jogo segue: confira a cartela e '
             'grite quando fechar de verdade.',
         'Voltar à cartela',
@@ -96,7 +96,7 @@ class ClaimResultOverlay extends StatelessWidget {
         AppColors.white,
         AppColors.navy,
         'EMPATE',
-        'Seu BINGO valeu, mas empatou na mesma bola e o sorteio de desempate '
+        'Seu BINGO valeu, mas empatou no mesmo número e o sorteio de desempate '
             'escolheu outra pessoa. '
             'Se quem ganhou ficar com o prêmio que já tinha, este pode vir para você. O jogo segue!',
         'Voltar à cartela',

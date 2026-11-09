@@ -91,7 +91,7 @@ final class AuditService {
       check(
         'Sorteio definido antes do jogo começar',
         'O segredo revelado no fim bate com o lacre publicado na criação da '
-            'sala: ninguém mudou a ordem das bolas no meio do jogo.',
+            'sala: ninguém mudou a ordem dos números no meio do jogo.',
         commitOk ? 1 : 0,
         1,
         ratio: false,
@@ -123,8 +123,8 @@ final class AuditService {
     }
     checks.add(
       check(
-        'Bolas sorteadas na ordem certa',
-        'Cada bola que saiu é exatamente a próxima da sequência calculada.',
+        'Números sorteados na ordem certa',
+        'Cada número que saiu é exatamente o próximo da sequência calculada.',
         drawOk,
         game.draws.length,
         technical: 'draws = prefixo da permutação do pool',
@@ -191,7 +191,7 @@ final class AuditService {
     checks.add(
       check(
         'Pedidos de BINGO conferidos de novo',
-        'Cada BINGO gritado foi reconferido com as bolas que já tinham saído '
+        'Cada BINGO gritado foi reconferido com os números que já tinham saído '
             'e os prêmios em jogo naquele momento; o resultado é o mesmo que '
             'o host deu.',
         claimOk,
@@ -281,7 +281,7 @@ final class AuditService {
     checks.add(
       check(
         'Azarão calculado de novo',
-        'A cada bola sai da disputa quem tem aquele número na cartela; o '
+        'A cada número sai da disputa quem tem aquele número na cartela; o '
             'último a sobrar é o mesmo ganhador registrado.',
         underOk ? 1 : 0,
         1,

@@ -20,8 +20,8 @@ class HowToStep {
     ),
     HowToStep(
       '2',
-      'Fique de olho nas bolas',
-      'O host sorteia e mostra cada bola na tela de transmissão. Elas também aparecem no topo da sua tela.',
+      'Fique de olho nos números',
+      'O host sorteia e mostra cada número na tela de transmissão. Eles também aparecem no topo da sua tela.',
       AppColors.cyan,
     ),
     HowToStep(
@@ -33,7 +33,7 @@ class HowToStep {
     HowToStep(
       '4',
       'Fechou? BINGO!',
-      'Completou a modalidade que está valendo? Aperte BINGO. O host confere na hora. Se você marcou um número que não saiu, comeu bola!',
+      'Completou a modalidade que está valendo? Aperte BINGO. O host confere na hora. Se você marcou algum número que ainda não saiu, o BINGO não vale.',
       AppColors.purple,
     ),
   ];

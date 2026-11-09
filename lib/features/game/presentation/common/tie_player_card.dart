@@ -53,10 +53,17 @@ class TiePlayerCard extends StatelessWidget {
           children: [
             NameToken(name: name, uid: uid, size: 120),
             const SizedBox(height: 16),
-            Text(
-              name,
-              textAlign: TextAlign.center,
-              style: AppText.display(28, color: fg),
+            SizedBox(
+              height: 72,
+              child: Center(
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.display(28, color: fg),
+                ),
+              ),
             ),
             if (how case final h?) ...[
               const SizedBox(height: 16),

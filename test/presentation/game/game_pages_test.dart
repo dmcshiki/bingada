@@ -24,9 +24,9 @@ Future<void> _pump(
   }
 }
 
-/// Any "N de 75" / "23 bolas" style counter must not exist for players (R23).
+/// Any "N de 75" / "23 números" style counter must not exist for players (R23).
 final _ballCount = RegExp(
-  r'\bde 75\b|\d+\s+bolas?\b|bola \d+',
+  r'\bde 75\b|\d+\s+(bolas?|números?)\b|bola \d+|\d+º número',
   caseSensitive: false,
 );
 
@@ -47,10 +47,10 @@ void main() {
       expect(find.text('Caneca'), findsOneWidget);
       // Pattern prizes are open together; the full card waits.
       expect(find.text('PRÓXIMOS PRÊMIOS'), findsNothing);
-      expect(find.bySemanticsLabel(RegExp('^Bola atual')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('^Número atual')), findsOneWidget);
       expect(_anyText(t, _ballCount), isFalse, reason: 'R23: no ball count');
       expect(
-        find.text('ÚLTIMAS BOLAS'),
+        find.text('ÚLTIMOS NÚMEROS'),
         findsNothing,
         reason: 'R23: no history',
       );
@@ -90,7 +90,7 @@ void main() {
         ),
       ]);
       await t.pump();
-      expect(find.text('COMEU BOLA'), findsOneWidget);
+      expect(find.text('BINGO ERRADO'), findsOneWidget);
       expect(
         find.textContaining('esse grito não valeu', findRichText: true),
         findsNothing,
@@ -136,7 +136,7 @@ void main() {
       expect(find.text('Confirmar vencedor'), findsNothing);
       expect(find.byType(ElevatedButton), findsNothing);
       expect(find.byType(InkWell), findsNothing);
-      expect(find.text('ÚLTIMAS BOLAS'), findsOneWidget);
+      expect(find.text('ÚLTIMOS NÚMEROS'), findsOneWidget);
       expect(
         find.textContaining('fechada', findRichText: true),
         findsOneWidget,
@@ -174,7 +174,7 @@ void main() {
       final repo = registerGameFakes(user: me.copyWith(uid: hostUid));
       await _pump(t, const HostPanelPage(code: _code));
       expect(find.text('SORTEAR'), findsOneWidget);
-      expect(find.textContaining('bola 23 de 75'), findsOneWidget);
+      expect(find.textContaining('número 23 de 75'), findsOneWidget);
 
       repo.emitClaims([
         Claim(

@@ -83,7 +83,7 @@ abstract class ClaimResult with _$ClaimResult {
     required ClaimVerdict verdict,
     @Default(<PatternMatch>[]) List<PatternMatch> matched,
 
-    /// Card items marked/required but not drawn (for "comeu bola" UI).
+    /// Card items marked/required but not drawn (for "BINGO errado" UI).
     @Default(<ItemId>[]) List<ItemId> notDrawn,
 
     /// Human-readable reason for the UI.

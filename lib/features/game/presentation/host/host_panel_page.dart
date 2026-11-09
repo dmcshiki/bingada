@@ -313,7 +313,7 @@ class _BoardPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SplitTitle('tabela de', 'bolas', size: 20),
+          const SplitTitle('tabela de', 'números', size: 20),
           const SizedBox(height: 10),
           PoolBoard(
             template: game.template,
@@ -388,7 +388,7 @@ class _DrawPanel extends StatelessWidget {
                             children: [
                               // Host only: the ball count is allowed here (R23).
                               Text(
-                                'bola ${game.draws.length} de $total · valendo: '
+                                'número ${game.draws.length} de $total · valendo: '
                                 '${openPrizesText(game)}',
                                 textAlign: TextAlign.center,
                                 style: AppText.body(14, color: AppColors.white),
@@ -540,7 +540,8 @@ class _RaffleBox extends StatelessWidget {
     final prize = game.prizeById(raffle.prizeId);
     final label = prize?.label ?? 'Prêmio';
     final why = switch (raffle.kind) {
-      RaffleKind.underdogTie => 'Empate no azarão: saíram todos na mesma bola',
+      RaffleKind.underdogTie =>
+        'Empate no azarão: saíram todos no mesmo número',
       RaffleKind.released when raffle.releasedBy != null =>
         '${playerName(players, raffle.releasedBy!)} abriu mão deste prêmio',
       RaffleKind.released => 'Ninguém ficou com este prêmio',
@@ -690,7 +691,7 @@ class ClaimQueueTile extends StatelessWidget {
       ),
       ClaimVerdict.missed => (
         const Color(0xFFF3EAFA),
-        '✕ comeu bola',
+        '✕ BINGO errado',
         AppColors.purple,
       ),
       ClaimVerdict.wrongPattern => (
@@ -719,8 +720,7 @@ class ClaimQueueTile extends StatelessWidget {
         : (prize == null ? '' : modalityName(prize));
     return Semantics(
       button: true,
-      label:
-          '$name, $how, ${ballOrdinal(claim.drawIndex)}, $tag. Abrir verificação',
+      label: '$name, $how, $tag. Abrir verificação',
       child: ExcludeSemantics(
         child: Material(
           color: bg,
@@ -743,9 +743,7 @@ class ClaimQueueTile extends StatelessWidget {
                             text: name,
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
-                          TextSpan(
-                            text: '\n$how · ${ballOrdinal(claim.drawIndex)}',
-                          ),
+                          TextSpan(text: '\n$how'),
                         ],
                       ),
                     ),
@@ -794,12 +792,12 @@ class _PrizeList extends StatelessWidget {
             Builder(
               builder: (context) {
                 final st = prizeStatus(game, p);
-                final current = st == PrizeStatus.open;
+                final current =
+                    st == PrizeStatus.open || st == PrizeStatus.underdog;
                 final who = winnerNames(game, p, players);
                 final status = switch (st) {
                   PrizeStatus.won => who,
-                  PrizeStatus.open => 'valendo',
-                  PrizeStatus.underdog => underdogTag(underdogAlive),
+                  PrizeStatus.open || PrizeStatus.underdog => 'valendo',
                   PrizeStatus.waiting => 'depois',
                 };
                 return Container(
@@ -831,13 +829,6 @@ class _PrizeList extends StatelessWidget {
                                 ),
                               ),
                               TextSpan(text: ' · ${modalityName(p)}'),
-                              if (st == PrizeStatus.underdog)
-                                if (underdogNames(underdogAlive, players)
-                                    case final names?)
-                                  TextSpan(
-                                    text: '\nNa disputa: $names',
-                                    style: AppText.body(12),
-                                  ),
                             ],
                           ),
                         ),

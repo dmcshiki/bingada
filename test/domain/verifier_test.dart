@@ -47,17 +47,14 @@ void main() {
     expect(r.verdict, ClaimVerdict.tampered);
   });
 
-  test(
-    'comeu bola: ball drawn only after the claim index still counts as missed',
-    () {
-      final g = makeGame(draws: row1Ids);
-      final r = run(g, makeClaim(drawIndex: 4, marked: row1));
-      expect(r.verdict, ClaimVerdict.missed);
-      expect(r.notDrawn, [row1Ids.last]);
-      expect(r.reason, startsWith('Marcou O '));
-      expect(r.reason, endsWith('que ainda não saiu'));
-    },
-  );
+  test('BINGO errado: ball drawn only after the claim index still counts as missed', () {
+    final g = makeGame(draws: row1Ids);
+    final r = run(g, makeClaim(drawIndex: 4, marked: row1));
+    expect(r.verdict, ClaimVerdict.missed);
+    expect(r.notDrawn, [row1Ids.last]);
+    expect(r.reason, startsWith('Marcou O '));
+    expect(r.reason, endsWith('que ainda não saiu'));
+  });
 
   test('no pattern → missed', () {
     final g = makeGame(draws: row1Ids);
@@ -147,7 +144,7 @@ void main() {
         currentDrawIndex: 4,
       );
       expect(b?.drawsLeft, 2);
-      expect(b?.reason, 'Bloqueado por comer bola');
+      expect(b?.reason, 'Bloqueado por BINGO errado');
       expect(
         e.blockFor(
           uid: const UserId('alice'),

@@ -346,7 +346,7 @@ class _CreateCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Você vira o host: define quem pode entrar, monta a cartela, escolhe os prêmios e canta as bolas. E ainda pode jogar.',
+                      'Você vira o host: define quem pode entrar, monta a cartela, escolhe os prêmios e canta os números. E ainda pode jogar.',
                       style: AppText.body(
                         16,
                         color: AppColors.white,

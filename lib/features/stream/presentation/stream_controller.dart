@@ -14,10 +14,10 @@ sealed class StreamOverlay {
   const StreamOverlay();
 }
 
-/// 13b – host is checking [claim].
+/// 13b – host is checking every pending [claims] (oldest first).
 final class CheckingOverlay extends StreamOverlay {
-  const CheckingOverlay(this.claim);
-  final Claim claim;
+  const CheckingOverlay(this.claims);
+  final List<Claim> claims;
 }
 
 /// 13c – valid; [prize] delivered, [next] is what now counts.
@@ -28,7 +28,7 @@ final class ValidOverlay extends StreamOverlay {
   final Prize? next;
 }
 
-/// 13d – rejected claim: "comeu bola" ([ClaimVerdict.missed]) or wrong
+/// 13d – rejected claim: "BINGO errado" ([ClaimVerdict.missed]) or wrong
 /// pattern ([ClaimVerdict.wrongPattern]). Only with showFailsOnStream.
 final class MissedOverlay extends StreamOverlay {
   const MissedOverlay(this.claim);
@@ -265,7 +265,11 @@ class StreamController extends GameWatchController {
       return TieOverlay(tied: tied, prize: prize);
     }
     pending.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return CheckingOverlay(pending.first);
+    final seen = <UserId>{};
+    return CheckingOverlay([
+      for (final c in pending)
+        if (seen.add(c.uid)) c,
+    ]);
   }
 
   @override

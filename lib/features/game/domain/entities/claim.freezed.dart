@@ -347,7 +347,7 @@ as DateTime,
 /// @nodoc
 mixin _$ClaimResult {
 
- ClaimVerdict get verdict; List<PatternMatch> get matched;/// Card items marked/required but not drawn (for "comeu bola" UI).
+ ClaimVerdict get verdict; List<PatternMatch> get matched;/// Card items marked/required but not drawn (for "BINGO errado" UI).
  List<ItemId> get notDrawn;/// Human-readable reason for the UI.
  String get reason;
 /// Create a copy of ClaimResult
@@ -560,9 +560,9 @@ class _ClaimResult implements ClaimResult {
   return EqualUnmodifiableListView(_matched);
 }
 
-/// Card items marked/required but not drawn (for "comeu bola" UI).
+/// Card items marked/required but not drawn (for "BINGO errado" UI).
  final  List<ItemId> _notDrawn;
-/// Card items marked/required but not drawn (for "comeu bola" UI).
+/// Card items marked/required but not drawn (for "BINGO errado" UI).
 @override@JsonKey() List<ItemId> get notDrawn {
   if (_notDrawn is EqualUnmodifiableListView) return _notDrawn;
   // ignore: implicit_dynamic_type

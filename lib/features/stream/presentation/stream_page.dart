@@ -72,7 +72,7 @@ class _StreamPageState extends State<StreamPage> {
     _lastBall = ball;
     if (!first) {
       unawaited(
-        announce(context, 'Nova bola: ${_c.game!.template.ballText(ball)}'),
+        announce(context, 'Novo número: ${_c.game!.template.ballText(ball)}'),
       );
     }
   }
@@ -268,7 +268,7 @@ class _StreamBoard extends StatelessWidget {
   Widget _ball(double size) => Column(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      const SplitTitle('bola', 'atual', size: 22, color: AppColors.white),
+      const SplitTitle('número', 'atual', size: 22, color: AppColors.white),
       const SizedBox(height: 28),
       BallToken(template: game.template, ball: game.currentBall, size: size),
     ],
@@ -304,7 +304,7 @@ class _LastBalls extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ÚLTIMAS BOLAS',
+          'ÚLTIMOS NÚMEROS',
           style: AppText.body(
             14 * scale,
             weight: FontWeight.w700,
@@ -327,13 +327,13 @@ class _LastBalls extends StatelessWidget {
               children: [
                 LoadingDots(
                   dotSize: 10 * scale,
-                  semanticLabel: 'Aguardando a primeira bola',
+                  semanticLabel: 'Aguardando o primeiro número',
                 ),
                 SizedBox(width: 14 * scale),
                 Expanded(
                   child: ExcludeSemantics(
                     child: Text(
-                      'aguardando a primeira bola',
+                      'aguardando o primeiro número',
                       style: AppText.body(17 * scale, color: AppColors.white),
                     ),
                   ),
@@ -344,7 +344,7 @@ class _LastBalls extends StatelessWidget {
         else
           Semantics(
             label:
-                'Últimas bolas: ${recent.map(game.template.ballText).join(', ')}',
+                'Últimos números: ${recent.map(game.template.ballText).join(', ')}',
             child: ExcludeSemantics(
               child: Wrap(
                 spacing: 14 * scale,
@@ -482,10 +482,13 @@ class _StreamOverlayView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => switch (overlay) {
-    CheckingOverlay(:final claim) => _OneOverlay(
-      kicker: 'BINGO!',
-      name: playerName(players, claim.uid),
-      uid: claim.uid,
+    CheckingOverlay(:final claims) => _OneOverlay(
+      kicker: claims.length == 1 ? 'BINGO!' : '${claims.length} BINGOS!',
+      name: _joinNames([for (final c in claims) playerName(players, c.uid)]),
+      uid: claims.first.uid,
+      others: [
+        for (final c in claims.skip(1)) (playerName(players, c.uid), c.uid),
+      ],
       badge: 'O HOST ESTÁ CONFERINDO…',
       badgeBg: AppColors.light,
       badgeFg: AppColors.navy,
@@ -499,7 +502,6 @@ class _StreamOverlayView extends StatelessWidget {
       badge: [
         'VÁLIDO',
         if (prize != null) modalityName(prize).toUpperCase(),
-        ballOrdinal(claim.drawIndex).toUpperCase(),
       ].join(' · '),
       badgeBg: AppColors.greenDark,
       badgeFg: AppColors.white,
@@ -511,11 +513,11 @@ class _StreamOverlayView extends StatelessWidget {
       kicker: 'BINGO?',
       name: playerName(players, claim.uid),
       uid: claim.uid,
-      badge: wrongPattern ? 'PADRÃO ERRADO' : 'COMEU BOLA',
+      badge: wrongPattern ? 'PADRÃO ERRADO' : 'BINGO ERRADO',
       badgeBg: AppColors.purple,
       badgeFg: AppColors.white,
       text:
-          '${wrongPattern ? 'O desenho marcado não fecha o prêmio que está valendo.' : 'Marcou bola que ainda não saiu.'} '
+          '${wrongPattern ? 'O desenho marcado não fecha o prêmio que está valendo.' : 'Marcou número que ainda não saiu.'} '
           'O jogo continua valendo a ${game.currentPrize?.label ?? ''}.',
       shake: true,
     ),
@@ -546,7 +548,7 @@ class _StreamOverlayView extends StatelessWidget {
       winners: raffle.winner == null ? null : {raffle.winner!},
       drawIndex: game.draws.length,
       headline: raffle.kind == RaffleKind.underdogTie
-          ? 'EMPATE NO AZARÃO · SAÍRAM NA MESMA BOLA'
+          ? 'EMPATE NO AZARÃO · SAÍRAM NO MESMO NÚMERO'
           : 'SORTEIO · '
                 '${game.prizeById(raffle.prizeId)?.label.toUpperCase() ?? ''}',
     ),
@@ -577,7 +579,7 @@ class _StreamOverlayView extends StatelessWidget {
       badgeBg: AppColors.pink,
       badgeFg: AppColors.navy,
       text:
-          'Resistiu ${winners.first.drawIndex} bolas sem nenhum número na cartela. '
+          'Resistiu ${winners.first.drawIndex} números sem nenhum número na cartela. '
           'Levou o ${prize.label}. O jogo continua valendo a '
           '${game.currentPrize?.label ?? ''}.',
     ),
@@ -615,11 +617,15 @@ class _OneOverlay extends StatelessWidget {
     required this.badgeBg,
     required this.badgeFg,
     required this.text,
+    this.others = const [],
   });
 
   final String kicker;
   final String name;
   final UserId uid;
+
+  /// More players in the same overlay (several BINGOs being checked).
+  final List<(String, UserId)> others;
   final String badge;
   final Color badgeBg;
   final Color badgeFg;
@@ -665,11 +671,69 @@ class _OneOverlay extends StatelessWidget {
         Text(text, style: AppText.body(20, height: 1.4)),
       ],
     );
+    final group = others.isNotEmpty;
     Widget card = DialogCard(
       semanticLabel: '$kicker $name: $badge',
       maxWidth: 920,
       padding: const EdgeInsets.all(48),
-      child: wide
+      child: group
+          ? Column(
+              children: [
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final (n, id) in [(name, uid), ...others])
+                      NameToken(name: n, uid: id, size: wide ? 140 : 96),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      kicker,
+                      style: AppText.body(
+                        18,
+                        weight: FontWeight.w700,
+                        letterSpacing: 1.08,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      name,
+                      textAlign: TextAlign.center,
+                      style: AppText.display(40, color: AppColors.navy),
+                    ),
+                    const SizedBox(height: 14),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        child: EllipsisText(
+                          badge,
+                          style: AppText.display(26, color: badgeFg),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      style: AppText.body(20, height: 1.4),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : wide
           ? Row(
               children: [
                 NameToken(name: name, uid: uid, size: 200),
@@ -775,7 +839,7 @@ class _TieOverlayState extends State<_TieOverlay> {
                 child: Text(
                   widget.headline ??
                       'EMPATE · ${prize?.label.toUpperCase() ?? ''} · '
-                          '${prize == null ? '' : modalityName(prize).toUpperCase()} · NA MESMA BOLA',
+                          '${prize == null ? '' : modalityName(prize).toUpperCase()} · NO MESMO NÚMERO',
                   textAlign: TextAlign.center,
                   style: AppText.body(
                     18,
@@ -812,10 +876,7 @@ class _TieOverlayState extends State<_TieOverlay> {
               tied: widget.tied,
               players: widget.players,
               winners: w,
-              how: [
-                if (prize != null) modalityName(prize),
-                ballOrdinal(widget.drawIndex),
-              ].join(' · '),
+              how: [if (prize != null) modalityName(prize)].join(' · '),
               winnerTag: 'LEVOU A ${prize?.label.toUpperCase() ?? ''}',
               onRevealed: () {
                 if (mounted) setState(() => _revealed = true);
@@ -880,12 +941,8 @@ class _StreamPrizes extends StatelessWidget {
         AppColors.green,
         AppColors.white,
       ),
-      PrizeStatus.open => ('VALENDO', AppColors.cyan, AppColors.inkOnLight),
-      PrizeStatus.underdog => (
-        underdogTag(underdogAlive),
-        AppColors.white.withValues(alpha: .14),
-        AppColors.white,
-      ),
+      PrizeStatus.open ||
+      PrizeStatus.underdog => ('VALENDO', AppColors.cyan, AppColors.inkOnLight),
       PrizeStatus.waiting => (
         'depois',
         AppColors.white.withValues(alpha: .08),
@@ -899,7 +956,7 @@ class _StreamPrizes extends StatelessWidget {
         vertical: 10 * scale,
       ),
       decoration: BoxDecoration(
-        color: st == PrizeStatus.open
+        color: st == PrizeStatus.open || st == PrizeStatus.underdog
             ? AppColors.white.withValues(alpha: .18)
             : AppColors.white.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(16 * scale),
@@ -950,22 +1007,12 @@ class _StreamPrizes extends StatelessWidget {
               ),
             ],
           ),
-          if (st == PrizeStatus.underdog)
-            if (underdogNames(underdogAlive, players) case final names?)
-              Padding(
-                padding: EdgeInsets.only(top: 6 * scale),
-                child: Text(
-                  'Na disputa: $names',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.body(
-                    13 * scale,
-                    color: AppColors.white.withValues(alpha: .85),
-                  ),
-                ),
-              ),
         ],
       ),
     );
   }
 }
+
+String _joinNames(List<String> names) => names.length <= 1
+    ? names.join()
+    : '${names.sublist(0, names.length - 1).join(', ')} e ${names.last}';

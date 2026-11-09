@@ -71,7 +71,7 @@ ErrorCopy errorCopyFor(
     color: AppColors.primary,
     fg: AppColors.white,
     title: 'O jogo já começou',
-    text: 'Novas cartelas não entram depois da primeira bola. Você pode assistir pela tela de transmissão.',
+    text: 'Novas cartelas não entram depois do primeiro número. Você pode assistir pela tela de transmissão.',
     primary: 'Assistir',
     secondary: 'Voltar ao início',
   ),

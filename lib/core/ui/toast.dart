@@ -11,7 +11,7 @@ enum ToastKind {
   /// A prize was won.
   prize,
 
-  /// A claim was rejected (comeu bola / modalidade errada).
+  /// A claim was rejected (BINGO errado / modalidade errada).
   miss,
 
   /// Neutral information.

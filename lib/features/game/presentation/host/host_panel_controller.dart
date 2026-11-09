@@ -144,10 +144,10 @@ class HostPanelController extends GameWatchController {
     if (g == null) return 'Carregando…';
     if (g.status != GameStatus.running) return 'O jogo não está em andamento';
     if (g.draws.length >= g.template.pool.length) {
-      return 'Todas as bolas já saíram';
+      return 'Todos os números já saíram';
     }
     if (pendingClaims.isNotEmpty) {
-      return 'Confira os pedidos de BINGO antes de sortear a próxima bola';
+      return 'Confira os pedidos de BINGO antes de sortear o próximo número';
     }
     if (g.raffle case final r? when r.winner == null) {
       final label = g.prizeById(r.prizeId)?.label ?? 'prêmio';
@@ -240,8 +240,51 @@ class HostPanelController extends GameWatchController {
   Future<bool> confirmSingle(Claim claim) async {
     final r = results[claim.id];
     if (game == null || r == null) return false;
-    return await _run(() => _award(claim, r, claim.prizeId));
+    return await _run(() async {
+      final choosing = _choosingSameDraw(claim);
+      if (choosing.isEmpty) return _award(claim, r, claim.prizeId);
+      final g = await _fresh();
+      for (final c in choosing) {
+        await _repoUpdate(g, _reopened(c));
+      }
+    });
   }
+
+  /// Valid claims of others for the same prize and ball whose player is
+  /// still deciding which prizes to keep: they are really a tie, so the
+  /// choice waits for the tiebreak.
+  List<Claim> _choosingSameDraw(Claim claim) => [
+    for (final c in claims)
+      if (c.id != claim.id &&
+          c.uid != claim.uid &&
+          c.prizeId == claim.prizeId &&
+          c.drawIndex == claim.drawIndex &&
+          c.status == ClaimStatus.awaitingChoice &&
+          !c.tieOptIn)
+        c,
+  ];
+
+  /// Valid claims of others for the same prize and ball still waiting for
+  /// the host.
+  bool _pendingSameDraw(Claim claim) => claims.any(
+    (o) =>
+        o.id != claim.id &&
+        o.uid != claim.uid &&
+        o.prizeId == claim.prizeId &&
+        o.drawIndex == claim.drawIndex &&
+        o.status == ClaimStatus.pending &&
+        withResult(o).verdict == ClaimVerdict.valid,
+  );
+
+  /// Back in line as a plain valid claim, without any answer.
+  Claim _reopened(Claim c) => c.copyWith(
+    status: ClaimStatus.pending,
+    verdict: ClaimVerdict.valid,
+    offerPrizeId: null,
+    choice: null,
+    releasePrizeId: null,
+    tieOptIn: false,
+  );
 
   /// 12b: deterministic draw among the tied players.
   Future<UserId?> drawTie(List<Claim> tied) async {
@@ -363,6 +406,10 @@ class HostPanelController extends GameWatchController {
   /// tie it goes back into play.
   Future<void> _applyChoice(Claim c) async {
     final g = await _fresh();
+    if (c.offerPrizeId == null && _pendingSameDraw(c)) {
+      await _repoUpdate(g, _reopened(c));
+      return;
+    }
     final offer = c.offerPrizeId ?? c.prizeId;
     final heldIds = _policy.heldBy(c.uid, g.winners, except: offer);
     // The prize given up: explicit answer, or the legacy keep/swap.

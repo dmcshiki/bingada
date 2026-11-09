@@ -175,6 +175,45 @@ void main() {
     expect(s.game.openPrizes.map((p) => p.id), contains(const PrizeId('p2')));
     s.dispose();
   });
+
+  test('a second BINGO on the same ball while the first is choosing turns '
+      'into a tie: nobody gives a prize up before the tiebreak', () async {
+    final s = await _Scenario.start(others);
+    final (w, y) = await s.underdogTieAndRaffle();
+    await s.winHorizontal(w);
+    for (final k in [0, 1, 3, 4]) {
+      final cw = {for (final i in s.column(k)) s.cards[w]!.cells[i]!};
+      final cy = {for (final i in s.column(k)) s.cards[y]!.cells[i]!};
+      final shared = cw
+          .intersection(cy)
+          .where((b) => !s.game.draws.contains(b));
+      if (shared.isEmpty) continue;
+      final last = shared.first;
+      for (final b in {...cw, ...cy}) {
+        if (b != last) await s.draw(b);
+      }
+      await s.draw(last);
+      final a = await s.bingo(w, const PrizeId('p2'), s.column(k));
+      expect(await s.host.confirmSingle(a), isTrue);
+      await s.settle();
+      expect(s.claim(a).status, ClaimStatus.awaitingChoice);
+      final b = await s.bingo(y, const PrizeId('p2'), s.column(k));
+      await s.repo.chooseClaim(
+        s.id,
+        a.id,
+        null,
+        releasePrizeId: const PrizeId('u1'),
+      );
+      await s.settle();
+      expect(s.claim(a).status, ClaimStatus.pending);
+      expect(s.held(w), {const PrizeId('u1'), const PrizeId('p1')});
+      expect(s.game.raffle?.kind, isNot(RaffleKind.released));
+      expect(s.host.tiedFor(b).map((c) => c.uid).toSet(), {w, y});
+      s.dispose();
+      return;
+    }
+    fail('no shared column ball');
+  });
 }
 
 String _seed(int i) => List.filled(64, '0123456789abcdef'[i % 16]).join();

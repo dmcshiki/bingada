@@ -50,7 +50,7 @@ void main() {
     for (final c in r) {
       expect(c.ok, isTrue, reason: c.title);
     }
-    expect(r.firstWhere((c) => c.title.startsWith('Bolas')).result, '40/40');
+    expect(r.firstWhere((c) => c.title.startsWith('Números')).result, '40/40');
     expect(
       r.firstWhere((c) => c.title.startsWith('Cartelas sem')).result,
       '2/2',
@@ -65,7 +65,7 @@ void main() {
       claims: const [],
     );
     expect(r.first.ok, isFalse);
-    expect(r.firstWhere((c) => c.title.startsWith('Bolas')).ok, isFalse);
+    expect(r.firstWhere((c) => c.title.startsWith('Números')).ok, isFalse);
   });
 
   test('tampered card fails regeneration', () {

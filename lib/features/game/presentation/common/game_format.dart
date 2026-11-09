@@ -40,7 +40,7 @@ String modalityHint(PatternKind kind) => switch (kind) {
   PatternKind.frame => 'toda a borda',
   PatternKind.full => 'todas as células',
   PatternKind.custom => 'o desenho do host',
-  PatternKind.underdog => 'último a sobrar: sai quem tem a bola sorteada',
+  PatternKind.underdog => 'último a sobrar: sai quem tem o número sorteado',
 };
 
 String modalityName(Prize prize) => prize.pattern == PatternKind.custom
@@ -107,9 +107,6 @@ double stampRotation(int index, int cols) {
   return ((r * 7 + c * 5) % 20 - 10).toDouble();
 }
 
-/// Ball number (1-based) for a claim/winner drawIndex (`draws.length`).
-String ballOrdinal(int drawIndex) => 'bola $drawIndex';
-
 /// Announces a message to screen readers in the current view.
 Future<void> announce(BuildContext context, String message) async {
   final view = View.maybeOf(context);
@@ -145,22 +142,4 @@ String openPrizesText(Game g) {
   final open = g.openPrizes;
   if (open.isEmpty) return '—';
   return open.map((p) => '${p.label} (${modalityName(p)})').join(' + ');
-}
-
-/// Tag of an open azarão: how many are still standing.
-String underdogTag(List<UserId>? alive) => switch (alive?.length) {
-  null => 'por eliminação',
-  1 => '1 na disputa',
-  final n => '$n na disputa',
-};
-
-/// Names still in the azarão race, only when few are left (else null).
-String? underdogNames(
-  List<UserId>? alive,
-  List<Player> players, {
-  int max = 6,
-}) {
-  if (alive == null || alive.isEmpty || alive.length > max) return null;
-  return [for (final uid in alive) playerName(players, uid).split(' ').first]
-      .join(', ');
 }

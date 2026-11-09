@@ -116,7 +116,7 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                             ),
                             child: Text(
                               'EMPATE · ${prize?.label.toUpperCase() ?? ''} · '
-                              '${prize == null ? '' : modalityName(prize).toUpperCase()} · MESMA BOLA$ball',
+                              '${prize == null ? '' : modalityName(prize).toUpperCase()} · MESMO NÚMERO$ball',
                               textAlign: TextAlign.center,
                               style: AppText.kicker(color: AppColors.white)
                                   .copyWith(fontSize: 15),
@@ -125,8 +125,9 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                         ),
                         const SizedBox(height: 26),
                         SplitTitle(
-                          '$countWord bingos,',
-                          'um prêmio: ${prize?.label ?? ''}',
+                          '${countWord[0].toUpperCase()}${countWord.substring(1)} '
+                          'bingos, um prêmio:',
+                          prize?.label ?? '',
                           size: MediaQuery.sizeOf(context).width < 700
                               ? 32
                               : 54,
@@ -136,7 +137,7 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 760),
                           child: Text(
-                            'Os $countWord gritos são válidos e fecharam na mesma bola. O desempate é '
+                            'Os $countWord gritos são válidos e fecharam no mesmo número. O desempate é '
                             'sorteado pelo sistema: ninguém escolhe o resultado, nem o host. '
                             'Esta tela aparece também no telão.',
                             textAlign: TextAlign.center,

@@ -44,8 +44,8 @@ class BallToken extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       label: id == null
-          ? 'Nenhuma bola sorteada ainda'
-          : 'Bola atual ${template.ballText(id)}',
+          ? 'Nenhum número sorteado ainda'
+          : 'Número atual ${template.ballText(id)}',
       child: ExcludeSemantics(
         child: SizedBox(
           width: size * 1.15,
@@ -188,7 +188,7 @@ class _BoardRow extends StatelessWidget {
     ];
     return Semantics(
       label:
-          'Coluna ${template.header(column)}: ${drawnLabels.isEmpty ? 'nenhuma sorteada' : 'sorteadas ${drawnLabels.join(', ')}'}',
+          'Coluna ${template.header(column)}: ${drawnLabels.isEmpty ? 'nenhum sorteado' : 'sorteados ${drawnLabels.join(', ')}'}',
       child: ExcludeSemantics(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
