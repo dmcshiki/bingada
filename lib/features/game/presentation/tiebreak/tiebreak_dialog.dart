@@ -62,6 +62,21 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
       final done = _winner != null;
       final st = c.tieState(widget.tied);
       final skipped = {for (final s in st.skipped) s.uid};
+      // The host's own claim waiting for join/skip: answered right here.
+      final mine = [
+        for (final t in c.claims)
+          if (widget.tied.any((x) => x.id == t.id) &&
+              t.uid == g.hostUid &&
+              t.status == ClaimStatus.awaitingChoice &&
+              t.tieOptIn)
+            t,
+      ].firstOrNull;
+      // One card per player (an old duplicate claim must not show twice).
+      final seen = <UserId>{};
+      final cards = [
+        for (final t in widget.tied)
+          if (seen.add(t.uid)) t,
+      ];
       final waitingNames = [
         for (final t in c.claims)
           if (widget.tied.any((x) => x.id == t.id) &&
@@ -149,12 +164,9 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                           ),
                         ),
                         const SizedBox(height: 38),
-                        Wrap(
-                          spacing: 48,
-                          runSpacing: 24,
-                          alignment: WrapAlignment.center,
+                        _EqualCards(
                           children: [
-                            for (final t in widget.tied)
+                            for (final t in cards)
                               TiePlayerCard(
                                 name: playerName(c.players, t.uid),
                                 uid: t.uid,
@@ -187,7 +199,17 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
                               ),
                             ),
                           ),
-                        if (st.waiting)
+                        if (mine != null)
+                          _HostOptIn(
+                            busy: c.busy,
+                            others: [
+                              for (final n in waitingNames)
+                                if (n != playerName(c.players, g.hostUid)) n,
+                            ],
+                            onAnswer: (join) =>
+                                c.answerOwnTie(mine, join: join),
+                          )
+                        else if (st.waiting)
                           Text(
                             'Aguardando ${waitingNames.join(', ')} decidir se entra no '
                             'sorteio: já está no limite de prêmios da sala.',
@@ -261,4 +283,101 @@ class _TiebreakDialogState extends State<TiebreakDialog> {
       );
     },
   );
+}
+
+/// The host is tied and at the limit: join or skip, right in this screen.
+class _HostOptIn extends StatelessWidget {
+  const _HostOptIn({
+    required this.busy,
+    required this.others,
+    required this.onAnswer,
+  });
+
+  final bool busy;
+  final List<String> others;
+  final ValueChanged<bool> onAnswer;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: Text(
+          'Você também empatou e já está no limite de prêmios da sala. '
+          'Entra no sorteio? Se ganhar, escolhe com quais prêmios fica.'
+          '${others.isEmpty ? '' : ' Também falta ${others.join(', ')} decidir.'}',
+          textAlign: TextAlign.center,
+          style: AppText.body(
+            16,
+            weight: FontWeight.w700,
+            color: AppColors.white,
+            height: 1.5,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        alignment: WrapAlignment.center,
+        children: [
+          AppButton(
+            label: 'Pular o sorteio',
+            kind: AppButtonKind.outline,
+            height: 60,
+            onPressed: busy ? null : () => onAnswer(false),
+          ),
+          AppButton(
+            label: 'Entrar no sorteio',
+            kind: AppButtonKind.light,
+            height: 60,
+            onPressed: busy ? null : () => onAnswer(true),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Tie cards all the same size: up to 6 per row, scaled to fit the screen.
+class _EqualCards extends StatelessWidget {
+  const _EqualCards({required this.children});
+
+  final List<Widget> children;
+
+  static const _card = 360.0;
+  static const _gap = 32.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = children.length;
+    if (n == 0) return const SizedBox.shrink();
+    final rows = (n / 6).ceil();
+    final perRow = (n / rows).ceil();
+    final size = MediaQuery.sizeOf(context);
+    final maxW = size.width * .9;
+    final cw = ((maxW - _gap * (perRow - 1)) / perRow).clamp(120.0, _card);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxW, maxHeight: size.height * .5),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+          width: cw * perRow + _gap * (perRow - 1),
+          child: Wrap(
+            spacing: _gap,
+            runSpacing: _gap * .75,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final c in children)
+                SizedBox(
+                  width: cw,
+                  child: FittedBox(child: c),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

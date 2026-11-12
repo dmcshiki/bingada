@@ -146,9 +146,17 @@ class ReviewStep extends StatelessWidget {
           _SummaryItem(k: 'CARTELA', v: c.cardSummary),
           _SummaryItem(k: 'PRÊMIOS', v: c.prizesSummary),
           _SummaryItem(
+            k: 'LIMITE',
+            v: switch (c.maxPerPlayer) {
+              null => 'Sem limite de prêmios por pessoa',
+              1 => '1 prêmio por pessoa',
+              final n => '$n prêmios por pessoa',
+            },
+          ),
+          _SummaryItem(
             k: 'AZARÃO',
             v: c.underdog
-                ? 'Prêmio azarão (por eliminação, durante o jogo)'
+                ? '${c.underdogLabel.trim()} (por eliminação, durante o jogo)'
                 : 'Sem prêmio azarão',
           ),
           Text(

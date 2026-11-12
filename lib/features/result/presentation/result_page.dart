@@ -419,7 +419,7 @@ class _UnderdogBox extends StatelessWidget {
       return 'Saiu junto com outros na mesma rodada, depois de $balls, '
           'e venceu o sorteio de desempate.';
     }
-    return 'Último a sobrar: resistiu $balls sem nenhum número na cartela. '
+    return 'Último a sobrar: passou $balls sem ter nenhum deles na cartela. '
         'Respeito.';
   }
 

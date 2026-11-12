@@ -12,6 +12,7 @@ import 'package:tokingo/core/ui/toast.dart';
 import 'package:tokingo/core/ui/widgets.dart';
 import 'package:tokingo/features/auth/domain/auth_repository.dart';
 import 'package:tokingo/features/game/domain/entities/bingo_card.dart';
+import 'package:tokingo/features/game/domain/entities/claim.dart';
 import 'package:tokingo/features/game/domain/entities/game.dart';
 import 'package:tokingo/features/game/domain/repositories/game_repository.dart';
 import 'package:tokingo/features/game/domain/services/penalty_evaluator.dart';
@@ -103,7 +104,15 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
   final _portal = OverlayPortalController();
 
   bool get _hasOverlay =>
-      _c.delivered != null || _c.choiceClaim != null || _resultOverlay != null;
+      _c.delivered != null || _choice != null || _resultOverlay != null;
+
+  /// In the host panel the tie join/skip question is answered in the
+  /// tiebreak screen, not over the panel.
+  Claim? get _choice {
+    final c = _c.choiceClaim;
+    if (widget.embedded && (c?.tieOptIn ?? false)) return null;
+    return c;
+  }
 
   /// In the host panel the "BINGO enviado" wait screen is skipped: the host
   /// checks their own claim there and must not be blocked by it.
@@ -131,7 +140,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
         claims: _c.claims,
         onClose: _c.dismissDelivered,
       ),
-    if (_c.choiceClaim case final pick?)
+    if (_choice case final pick?)
       ChoosePrizeOverlay(
         claim: pick,
         game: g,

@@ -68,6 +68,19 @@ test('claim must match current drawIndex and prize', async () => {
     setDoc(doc(c.firestore(), 'games/g1/cards/a'), { items: [] }));
   const a = user('a', 'a@acme.dev');
   const base = { uid: 'a', prizeId: 'p1', status: 'pending', verdict: null };
-  await assertFails(setDoc(doc(a, 'games/g1/claims/c0'), { ...base, drawIndex: 0 }));
-  await assertSucceeds(setDoc(doc(a, 'games/g1/claims/c1'), { ...base, drawIndex: 1 }));
+  await assertFails(setDoc(doc(a, 'games/g1/claims/a_0_p1'), { ...base, drawIndex: 0 }));
+  await assertSucceeds(setDoc(doc(a, 'games/g1/claims/a_1_p1'), { ...base, drawIndex: 1 }));
+});
+test('claim id is bound to its owner, ball and prize', async () => {
+  await seed(game({ status: 'running', draws: ['0:1'] }));
+  await env.withSecurityRulesDisabled((c) =>
+    setDoc(doc(c.firestore(), 'games/g1/cards/a'), { items: [] }));
+  const a = user('a', 'a@acme.dev');
+  const base = { uid: 'a', prizeId: 'p1', status: 'pending', verdict: null, drawIndex: 1 };
+  // Pre-creating another player's id must fail.
+  await assertFails(setDoc(doc(a, 'games/g1/claims/b_1_p1'), base));
+  await assertFails(setDoc(doc(a, 'games/g1/claims/random'), base));
+  // Forged fields are refused.
+  await assertFails(setDoc(doc(a, 'games/g1/claims/a_1_p1'), { ...base, matched: [{ kind: 'full', index: 0 }] }));
+  await assertFails(setDoc(doc(a, 'games/g1/claims/a_1_p1'), { ...base, hack: true }));
 });

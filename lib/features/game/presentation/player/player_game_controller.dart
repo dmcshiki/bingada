@@ -293,6 +293,15 @@ class PlayerGameController extends GameWatchController {
       history: claims,
       currentDrawIndex: g.draws.length,
     );
+    // Already waiting for the host on this ball (e.g. after a reload).
+    if (claims.any(
+      (c) =>
+          c.uid == u.uid &&
+          c.drawIndex == g.draws.length &&
+          c.status == ClaimStatus.pending,
+    )) {
+      return 'BINGO ENVIADO · AGUARDE O HOST';
+    }
     if (block != null) {
       final left = block.drawsLeft;
       return left == null

@@ -193,6 +193,8 @@ class HostPanelController extends GameWatchController {
     } finally {
       busy = false;
       super.notifyListeners();
+      // Answers that arrived while busy were not applied: do it now.
+      scheduleMicrotask(_drainAnswers);
     }
   }
 
@@ -318,7 +320,9 @@ class HostPanelController extends GameWatchController {
       if (c.id == win.id ||
           c.prizeId != win.prizeId ||
           c.drawIndex != win.drawIndex ||
-          c.status != ClaimStatus.pending) {
+          c.status != ClaimStatus.pending ||
+          // Only valid BINGOs wait in line for a released prize.
+          withResult(c).verdict != ClaimVerdict.valid) {
         continue;
       }
       final r = results[c.id];
@@ -340,13 +344,34 @@ class HostPanelController extends GameWatchController {
   @override
   void onClaimsChanged(List<Claim> next, {required bool first}) {
     super.onClaimsChanged(next, first: first);
-    for (final c in next) {
+    _drainAnswers();
+  }
+
+  /// Applies answered choices (one at a time). While another action runs it
+  /// waits: [_run] calls this again when it finishes, so no answer is lost.
+  /// Also ends the game when the last choice was applied.
+  void _drainAnswers() {
+    if (busy || game == null) return;
+    for (final c in claims) {
       if (c.status != ClaimStatus.awaitingChoice || !c.answered) continue;
       if (!_choosing.add(c.id)) continue;
       unawaited(
         _run(() => c.tieOptIn ? _applyOptIn(c) : _applyChoice(c))
             .whenComplete(() => _choosing.remove(c.id)),
       );
+      return;
+    }
+    final g = game!;
+    if (g.status == GameStatus.running &&
+        g.draws.isNotEmpty &&
+        g.openPrizes.isEmpty &&
+        g.raffle == null &&
+        !claims.any(
+          (c) =>
+              c.status == ClaimStatus.awaitingChoice ||
+              c.status == ClaimStatus.pending,
+        )) {
+      unawaited(_run(_endIfDone));
     }
   }
 
@@ -437,7 +462,9 @@ class HostPanelController extends GameWatchController {
       for (final o in claims)
         if (o.id != c.id &&
             o.prizeId == c.prizeId &&
-            o.status == ClaimStatus.tied)
+            o.drawIndex == c.drawIndex &&
+            o.status == ClaimStatus.tied &&
+            o.verdict == ClaimVerdict.valid)
           o,
     ];
     final tie =
@@ -530,7 +557,9 @@ class HostPanelController extends GameWatchController {
       // One of those who bingoed with the releaser: their claim carries the
       // prize (and the limit check, if they hit it).
       for (final o in claims) {
-        if (o.uid == uid && o.status == ClaimStatus.tied) {
+        if (o.uid == uid &&
+            o.prizeId == r.prizeId &&
+            o.status == ClaimStatus.tied) {
           await _award(o, results[o.id], r.prizeId, tieBreak: true);
           return;
         }
@@ -622,6 +651,16 @@ class HostPanelController extends GameWatchController {
   }
 
   /// Only one player left after the others skipped: they take the prize.
+  /// The host is tied too and at the limit: answers join/skip right in the
+  /// tiebreak screen (same answer a player gives on their phone).
+  Future<bool> answerOwnTie(Claim c, {required bool join}) => _run(
+    () => repository.chooseClaim(
+      game!.id,
+      c.id,
+      join ? ClaimChoice.join : ClaimChoice.skip,
+    ),
+  );
+
   Future<bool> awardSoleTied(Claim c) => _run(() async {
     await _parkOthers(await _fresh(), c);
     await _award(c, results[c.id], c.prizeId, tieBreak: true);

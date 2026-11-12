@@ -45,6 +45,7 @@ class AccessStep extends StatelessWidget {
             label: 'Nome do evento',
             child: DraftField(
               initial: c.eventName,
+              hint: 'Ex.: Happy hour de sexta',
               semanticsLabel: 'Nome do evento',
               style: AppText.body(16, color: AppColors.graphite),
               onChanged: (v) => c.eventName = v,

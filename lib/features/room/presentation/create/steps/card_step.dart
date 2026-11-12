@@ -132,6 +132,11 @@ class _Editor extends StatelessWidget {
                   ),
                 ),
               ),
+            if (c.freeEnabled &&
+                c.freeAvailable &&
+                c.freeUseImage &&
+                c.freeImageUrl.trim().isNotEmpty)
+              _ImageCheck(url: c.freeImageUrl.trim()),
           ],
         ),
         const SizedBox(height: 18),
@@ -472,4 +477,56 @@ class _Preview extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Loads the free-cell image once so the host knows right away when the
+/// link does not work (players would see the label instead).
+class _ImageCheck extends StatelessWidget {
+  const _ImageCheck({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 280,
+    child: Row(
+      children: [
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: Image.network(
+            url,
+            key: ValueKey(url),
+            fit: BoxFit.contain,
+            webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Image.network(
+            url,
+            key: ValueKey('check-$url'),
+            width: 1,
+            height: 1,
+            webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+            frameBuilder: (_, child, frame, _) => Text(
+              frame == null ? 'Carregando a imagem…' : 'Imagem carregou ✓',
+              style: AppText.body(13, color: AppColors.graphite),
+            ),
+            errorBuilder: (_, _, _) => Text(
+              'Não conseguimos abrir essa imagem. Os jogadores verão ★ no '
+              'lugar. Use um link direto para o arquivo (.png/.jpg) que '
+              'abra sem login.',
+              style: AppText.body(
+                13,
+                weight: FontWeight.w700,
+                color: AppColors.pink,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

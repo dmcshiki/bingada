@@ -32,3 +32,4 @@ android/key.properties
 
 # npm dependencies (test/rules emulator tests)
 node_modules/
+.playwright-mcp/

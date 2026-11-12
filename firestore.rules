@@ -114,6 +114,9 @@ service cloud.firestore {
       // No server: any signed-in client ends a game idle for 1 hour.
       function idleAbandonOk() {
         return changed().hasOnly(['status', 'endedAt'])
+          // Only people in the room (players or host).
+          && (resource.data.hostUid == request.auth.uid
+              || exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid)))
           && resource.data.status in ['lobby', 'running']
           && request.resource.data.status == 'abandoned'
           && request.resource.data.endedAt == request.time
@@ -122,6 +125,7 @@ service cloud.firestore {
       // A player creating a claim bumps only the activity clock.
       function activityBumpOk() {
         return changed().hasOnly(['lastActivityAt'])
+          && exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid))
           && resource.data.status == 'running'
           && request.resource.data.lastActivityAt == request.time;
       }
@@ -178,6 +182,16 @@ service cloud.firestore {
       match /claims/{claimId} {
         allow read: if canView(gameId, gameBefore(gameId));
         allow create: if signedIn()
+          // One claim per player, ball and prize (the app creates it in a
+          // transaction): nobody can pre-create someone else's id.
+          && claimId == request.auth.uid + '_'
+               + string(request.resource.data.drawIndex) + '_'
+               + request.resource.data.prizeId
+          && request.resource.data.keys().hasOnly(['uid', 'prizeId',
+               'drawIndex', 'markedCells', 'matched', 'verdict', 'status',
+               'offerPrizeId', 'choice', 'releasePrizeId', 'tieOptIn',
+               'createdAt'])
+          && request.resource.data.get('matched', []).size() == 0
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.status == 'pending'
           && request.resource.data.verdict == null

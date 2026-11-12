@@ -45,6 +45,29 @@ class _HostWaitingPageState extends State<HostWaitingPage> {
   Future<void> _start() async {
     final g = _c.game;
     if (g == null || _starting) return;
+    // Irreversible: nobody else can join after this.
+    final n = g.playerCount;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Começar a partida?'),
+        content: Text(
+          'Com $n ${n == 1 ? 'jogador' : 'jogadores'} na sala. Depois de '
+          'começar, ninguém mais entra e ninguém troca o apelido.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Ainda não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Começar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     setState(() => _starting = true);
     try {
       await sl<StartGame>()(g);

@@ -115,7 +115,10 @@ class _TieRevealState extends State<TieReveal>
             final rows = (n / 6).ceil().clamp(1, n);
             final perRow = (n / rows).ceil();
             const gap = 32.0;
-            final maxW = box.maxWidth.isFinite ? box.maxWidth : 1600.0;
+            final screen = MediaQuery.sizeOf(context).width * .92;
+            final maxW = box.maxWidth.isFinite && box.maxWidth < screen
+                ? box.maxWidth
+                : screen;
             final cw = ((maxW - gap * (perRow - 1)) / perRow).clamp(
               120.0,
               TieReveal.cardWidth,

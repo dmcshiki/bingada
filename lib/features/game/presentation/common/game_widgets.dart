@@ -205,9 +205,13 @@ class _BoardRow extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(cellHeight * .32),
               ),
-              child: Text(
-                template.header(column),
-                style: AppText.display(cellHeight * .5, color: fg),
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: FittedBox(
+                child: Text(
+                  template.header(column),
+                  maxLines: 1,
+                  style: AppText.display(cellHeight * .5, color: fg),
+                ),
               ),
             ),
             SizedBox(width: gap),

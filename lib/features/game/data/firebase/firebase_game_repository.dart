@@ -256,15 +256,21 @@ final class FirebaseGameRepository implements GameRepository {
     Claim claim, {
     PrizeId? Function(Game game)? prizeFor,
   }) => _guard(() async {
-    final ref = _game(id).collection('claims').doc();
-    // Transaction: the ball index comes from the server's game, not from the
-    // player's snapshot. A plain write showed up locally (chime played) and
-    // was then rejected by the rules when the host had just drawn a ball.
-    await _db.runTransaction<void>((tx) async {
+    // Transaction: the ball index and prize come from the server's game, not
+    // from the player's snapshot (a plain write showed up locally, chimed,
+    // and was then rejected when the host had just drawn a ball).
+    // One id per player, ball and prize: a second tap or a page reload
+    // cannot create a duplicate claim.
+    final created = await _db.runTransaction<ClaimId>((tx) async {
       final game = _snap(await tx.get(_game(id)));
       if (game.status != GameStatus.running) {
         throw const GameFailure(GameFailureCode.finished);
       }
+      final prize = prizeFor?.call(game) ?? claim.prizeId;
+      final ref = _game(id)
+          .collection('claims')
+          .doc('${claim.uid.value}_${game.draws.length}_${prize.value}');
+      if ((await tx.get(ref)).exists) return ClaimId(ref.id);
       tx.set(
         ref,
         _map.claimToMap(
@@ -272,10 +278,11 @@ final class FirebaseGameRepository implements GameRepository {
             id: ClaimId(ref.id),
             status: ClaimStatus.pending,
             drawIndex: game.draws.length,
-            prizeId: prizeFor?.call(game) ?? claim.prizeId,
+            prizeId: prize,
           ),
         ),
       );
+      return ClaimId(ref.id);
     });
     // Best effort: rules let any player bump only this field.
     try {
@@ -283,7 +290,7 @@ final class FirebaseGameRepository implements GameRepository {
     } on Object {
       // The claim itself is what matters.
     }
-    return ClaimId(ref.id);
+    return created;
   });
 
   @override

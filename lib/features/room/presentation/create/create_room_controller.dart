@@ -96,7 +96,7 @@ class CreateRoomController extends ChangeNotifier {
   bool busy = false;
 
   // 03 Access
-  String eventName = 'Happy hour de sexta';
+  String eventName = '';
   AccessMode mode = AccessMode.domain;
   String domainsText = '';
   String emailsText = '';
@@ -354,7 +354,7 @@ class CreateRoomController extends ChangeNotifier {
     final t = template;
     if (t == null) return '—';
     final free = t.freeCellIndex != null
-        ? ' · centro livre ${t.free.label}'
+        ? ' · centro livre ${t.free.imageUrl != null ? 'com imagem' : t.free.label}'
         : '';
     return '$templateName · $size×$size$free · colunas ${t.headers.join(' ')}';
   }
