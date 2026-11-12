@@ -371,7 +371,6 @@ class HelpSidePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final current = game.currentPrize;
     return Positioned.fill(
       child: Stack(
         children: [
@@ -426,33 +425,6 @@ class HelpSidePanel extends StatelessWidget {
                         ),
                         const SizedBox(height: 18),
                         const HowToPlayPanel(compact: true, showTitle: false),
-                        if (current != null) ...[
-                          const SizedBox(height: 18),
-                          SectionCard(
-                            radius: 18,
-                            color: AppColors.blueSoft,
-                            padding: const EdgeInsets.all(16),
-                            child: Text.rich(
-                              TextSpan(
-                                style: AppText.body(14, height: 1.5),
-                                children: [
-                                  const TextSpan(text: 'Valendo agora: '),
-                                  TextSpan(
-                                    text:
-                                        '${current.label} · ${modalityName(current)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text:
-                                        '. Vale ${modalityHint(current.pattern)}.',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),

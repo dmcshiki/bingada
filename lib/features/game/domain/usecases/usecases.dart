@@ -149,28 +149,41 @@ final class CallBingo {
 
   final GameRepository _repo;
 
-  Future<ClaimId> call(Game game, UserId uid, Set<int> marked) {
+  /// The open prize [marked] completes (the first open one otherwise).
+  static PrizeId? prizeFor(Game game, Set<int> marked) {
     final open = game.openPrizes;
-    if (open.isEmpty) throw const GameFailure(GameFailureCode.finished);
+    if (open.isEmpty) return null;
     // Several prizes may be open at once: claim the one the marks complete.
     final t = game.template;
     final filled = {...marked, ?t.freeCellIndex};
-    final prize = open.firstWhere(
-      (p) => const PatternDetector()
-          .completed(filled: filled, rows: t.rows, cols: t.cols, prize: p)
-          .isNotEmpty,
-      orElse: () => open.first,
-    );
+    return open
+        .firstWhere(
+          (p) => const PatternDetector()
+              .completed(filled: filled, rows: t.rows, cols: t.cols, prize: p)
+              .isNotEmpty,
+          orElse: () => open.first,
+        )
+        .id;
+  }
+
+  /// The repository fixes the ball index and the prize from the server's
+  /// game: the local snapshot may be a ball (or a prize) behind.
+  Future<ClaimId> call(Game game, UserId uid, Set<int> marked) {
+    final prize = prizeFor(game, marked);
+    if (game.status != GameStatus.running || prize == null) {
+      throw const GameFailure(GameFailureCode.finished);
+    }
     return _repo.createClaim(
       game.id,
       Claim(
         id: const ClaimId(''),
         uid: uid,
-        prizeId: prize.id,
+        prizeId: prize,
         drawIndex: game.draws.length,
         markedCells: marked.toList()..sort(),
         createdAt: DateTime.now().toUtc(),
       ),
+      prizeFor: (fresh) => prizeFor(fresh, marked),
     );
   }
 }

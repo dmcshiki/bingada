@@ -276,8 +276,17 @@ final class LocalGameRepository implements GameRepository {
   ]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
   @override
-  Future<ClaimId> createClaim(GameId id, Claim claim) async {
+  Future<ClaimId> createClaim(
+    GameId id,
+    Claim input, {
+    PrizeId? Function(Game game)? prizeFor,
+  }) async {
     final game = _requireGame(id);
+    // Like the server: ball index and prize from the current game.
+    final claim = input.copyWith(
+      drawIndex: game.draws.length,
+      prizeId: prizeFor?.call(game) ?? input.prizeId,
+    );
     final uid = _currentUid?.call();
     if (_currentUid != null && uid != claim.uid) {
       throw const GameFailure(GameFailureCode.accessDenied);

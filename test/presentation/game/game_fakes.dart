@@ -134,7 +134,11 @@ class FakeRepo implements GameRepository {
   ];
 
   @override
-  Future<ClaimId> createClaim(GameId id, Claim claim) async {
+  Future<ClaimId> createClaim(
+    GameId id,
+    Claim claim, {
+    PrizeId? Function(Game game)? prizeFor,
+  }) async {
     final c = claim.copyWith(id: ClaimId('c${claims.length + 1}'));
     emitClaims([...claims, c]);
     return c.id;

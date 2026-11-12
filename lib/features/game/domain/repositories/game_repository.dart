@@ -61,7 +61,13 @@ abstract interface class GameRepository {
   /// Appends exactly one ball. Fails with [GameFailureCode.pendingClaims].
   Future<void> appendDraw(GameId id, ItemId item);
 
-  Future<ClaimId> createClaim(GameId id, Claim claim);
+  /// Creates a pending claim. [prizeFor] re-picks the prize from the
+  /// current game; the ball index always comes from the current game.
+  Future<ClaimId> createClaim(
+    GameId id,
+    Claim claim, {
+    PrizeId? Function(Game game)? prizeFor,
+  });
 
   Stream<List<Claim>> watchClaims(GameId id);
 

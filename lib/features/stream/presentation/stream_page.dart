@@ -386,14 +386,33 @@ extension on _LastBalls {
           color: color,
           child: Padding(
             padding: EdgeInsets.all(size * .1),
-            child: FittedBox(
-              child: Text(
-                game.template.ballShort(id),
-                style: AppText.display(
-                  size * .32,
-                  color: AppColors.onColor(color),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (game.template.header(id.column).isNotEmpty)
+                  FittedBox(
+                    child: Text(
+                      game.template.header(id.column),
+                      maxLines: 1,
+                      style: AppText.display(
+                        size * .17,
+                        color: AppColors.onColor(color),
+                      ),
+                    ),
+                  ),
+                Flexible(
+                  child: FittedBox(
+                    child: Text(
+                      game.template.item(id).label,
+                      maxLines: 1,
+                      style: AppText.display(
+                        size * .4,
+                        color: AppColors.onColor(color),
+                      ).copyWith(height: 1),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),

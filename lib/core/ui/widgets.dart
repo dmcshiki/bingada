@@ -407,12 +407,16 @@ class BingoGrid extends StatelessWidget {
                     color: headerColors[c % headerColors.length],
                     borderRadius: BorderRadius.circular(headerHeight / 2),
                   ),
-                  child: Text(
-                    headers[c],
-                    style: AppText.display(
-                      headerHeight * .5,
-                      color: AppColors.onColor(
-                        headerColors[c % headerColors.length],
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: FittedBox(
+                    child: Text(
+                      headers[c],
+                      maxLines: 1,
+                      style: AppText.display(
+                        headerHeight * .5,
+                        color: AppColors.onColor(
+                          headerColors[c % headerColors.length],
+                        ),
                       ),
                     ),
                   ),

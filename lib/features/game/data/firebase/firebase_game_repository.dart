@@ -251,13 +251,32 @@ final class FirebaseGameRepository implements GameRepository {
   }
 
   @override
-  Future<ClaimId> createClaim(GameId id, Claim claim) => _guard(() async {
+  Future<ClaimId> createClaim(
+    GameId id,
+    Claim claim, {
+    PrizeId? Function(Game game)? prizeFor,
+  }) => _guard(() async {
     final ref = _game(id).collection('claims').doc();
-    await ref.set(
-      _map.claimToMap(
-        claim.copyWith(id: ClaimId(ref.id), status: ClaimStatus.pending),
-      ),
-    );
+    // Transaction: the ball index comes from the server's game, not from the
+    // player's snapshot. A plain write showed up locally (chime played) and
+    // was then rejected by the rules when the host had just drawn a ball.
+    await _db.runTransaction<void>((tx) async {
+      final game = _snap(await tx.get(_game(id)));
+      if (game.status != GameStatus.running) {
+        throw const GameFailure(GameFailureCode.finished);
+      }
+      tx.set(
+        ref,
+        _map.claimToMap(
+          claim.copyWith(
+            id: ClaimId(ref.id),
+            status: ClaimStatus.pending,
+            drawIndex: game.draws.length,
+            prizeId: prizeFor?.call(game) ?? claim.prizeId,
+          ),
+        ),
+      );
+    });
     // Best effort: rules let any player bump only this field.
     try {
       await _game(id).update({'lastActivityAt': FieldValue.serverTimestamp()});

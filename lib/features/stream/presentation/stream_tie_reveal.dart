@@ -11,6 +11,8 @@ import 'package:tokingo/features/stream/presentation/stream_fx.dart';
 /// fade. [onRevealed] fires when the reveal ends (immediately with reduced
 /// motion, which only cross-fades).
 class TieReveal extends StatefulWidget {
+  static const cardWidth = 400.0;
+
   const TieReveal({
     required this.tied,
     required this.players,
@@ -105,24 +107,54 @@ class _TieRevealState extends State<TieReveal>
               )
             : 0.0;
         final hop = w != null && !revealed ? _hop(t) : -1;
-        return Wrap(
-          spacing: 56,
-          runSpacing: 24,
-          alignment: WrapAlignment.center,
-          children: [
-            for (final (i, uid) in widget.tied.indexed)
-              _card(
-                uid: uid,
-                state: !revealed
-                    ? TieCardState.pending
-                    : w.contains(uid)
-                    ? TieCardState.winner
-                    : TieCardState.loser,
-                highlighted: i == hop,
-                settle: reduce ? 1 : settle,
-                reduce: reduce,
+        return LayoutBuilder(
+          builder: (context, box) {
+            // Same size for everyone: up to 6 per row, rows balanced, the
+            // whole block scaled down to fit the screen (20+ players).
+            final n = widget.tied.length;
+            final rows = (n / 6).ceil().clamp(1, n);
+            final perRow = (n / rows).ceil();
+            const gap = 32.0;
+            final maxW = box.maxWidth.isFinite ? box.maxWidth : 1600.0;
+            final cw = ((maxW - gap * (perRow - 1)) / perRow).clamp(
+              120.0,
+              TieReveal.cardWidth,
+            );
+            final maxH = MediaQuery.sizeOf(context).height * .55;
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxH, maxWidth: maxW),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: cw * perRow + gap * (perRow - 1),
+                  child: Wrap(
+                    spacing: gap,
+                    runSpacing: gap * .75,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final (i, uid) in widget.tied.indexed)
+                        SizedBox(
+                          width: cw,
+                          child: FittedBox(
+                            child: _card(
+                              uid: uid,
+                              state: !revealed
+                                  ? TieCardState.pending
+                                  : w.contains(uid)
+                                  ? TieCardState.winner
+                                  : TieCardState.loser,
+                              highlighted: i == hop,
+                              settle: reduce ? 1 : settle,
+                              reduce: reduce,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-          ],
+            );
+          },
         );
       },
     );
@@ -138,7 +170,7 @@ class _TieRevealState extends State<TieReveal>
     final card = TiePlayerCard(
       name: playerName(widget.players, uid),
       uid: uid,
-      width: 400,
+      width: TieReveal.cardWidth,
       how: widget.how,
       winnerTag: widget.winnerTag,
       state: state,

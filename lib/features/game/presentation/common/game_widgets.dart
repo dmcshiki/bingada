@@ -90,9 +90,13 @@ class _BallLabel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            template.header(id.column),
-            style: AppText.display(size * .17, color: fg),
+          FittedBox(
+            child: Text(
+              template.header(id.column),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: AppText.display(size * .17, color: fg),
+            ),
           ),
           FittedBox(
             child: Text(

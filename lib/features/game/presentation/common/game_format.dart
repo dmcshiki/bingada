@@ -21,12 +21,6 @@ extension TemplateFormat on CardTemplate {
 
   /// "N 38" (header + label).
   String ballText(ItemId id) => '${header(id.column)} ${item(id).label}'.trim();
-
-  /// Compact "N38" for small tokens; long labels keep a space.
-  String ballShort(ItemId id) {
-    final label = item(id).label;
-    return label.length > 3 ? label : '${header(id.column)}$label';
-  }
 }
 
 /// Short explanation of a modality, as in the canvas.

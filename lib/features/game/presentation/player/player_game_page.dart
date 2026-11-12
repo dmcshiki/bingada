@@ -103,7 +103,15 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
   final _portal = OverlayPortalController();
 
   bool get _hasOverlay =>
-      _c.delivered != null || _c.choiceClaim != null || _c.overlay != null;
+      _c.delivered != null || _c.choiceClaim != null || _resultOverlay != null;
+
+  /// In the host panel the "BINGO enviado" wait screen is skipped: the host
+  /// checks their own claim there and must not be blocked by it.
+  ClaimOverlayKind? get _resultOverlay {
+    final kind = _c.overlay;
+    if (widget.embedded && kind == ClaimOverlayKind.waiting) return null;
+    return kind;
+  }
 
   void _syncPortal() {
     if (_hasOverlay == _portal.isShowing) return;
@@ -134,7 +142,7 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
         onRelease: _c.release,
         onAnswerTie: (join) => _c.answerTie(join: join),
       )
-    else if (_c.overlay case final kind?)
+    else if (_resultOverlay case final kind?)
       ClaimResultOverlay(
         kind: kind,
         claim: _c.followedClaim,
