@@ -38,7 +38,9 @@ class _ResultPageState extends State<ResultPage> {
   @override
   void initState() {
     super.initState();
-    _confetti = ConfettiController(duration: const Duration(seconds: 4));
+    _confetti = ConfettiController(
+      duration: const Duration(milliseconds: 1500),
+    );
     _c = GameWatchController(
       code: widget.code,
       repository: sl<GameRepository>(),
@@ -131,15 +133,20 @@ class _ResultPageState extends State<ResultPage> {
             ),
             Align(
               alignment: Alignment.topCenter,
-              child: ExcludeSemantics(
-                child: ConfettiWidget(
-                  confettiController: _confetti,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 24,
-                  colors: AppColors.columns,
-                  minimumSize: const Size(12, 12),
-                  maximumSize: const Size(18, 18),
-                  createParticlePath: _tokenPath,
+              child: IgnorePointer(
+                child: ExcludeSemantics(
+                  child: ConfettiWidget(
+                    confettiController: _confetti,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    numberOfParticles: 24,
+                    // Falls fast and leaves the screen in a few seconds.
+                    gravity: .45,
+                    emissionFrequency: .08,
+                    colors: AppColors.columns,
+                    minimumSize: const Size(12, 12),
+                    maximumSize: const Size(18, 18),
+                    createParticlePath: _tokenPath,
+                  ),
                 ),
               ),
             ),

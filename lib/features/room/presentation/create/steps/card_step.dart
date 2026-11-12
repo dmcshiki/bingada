@@ -245,7 +245,7 @@ class _ColumnsTable extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
                 children: [
-                  SizedBox(width: 70, child: Text('Título', style: head)),
+                  SizedBox(width: 130, child: Text('Título', style: head)),
                   const SizedBox(width: 10),
                   SizedBox(width: 90, child: Text('Cor', style: head)),
                   const SizedBox(width: 10),
@@ -289,13 +289,13 @@ class _ColumnRow extends StatelessWidget {
     final col = c.columns[index];
     final ok = c.columnOk(index);
     final title = SizedBox(
-      width: 70,
+      width: 130,
       child: DraftField(
         initial: col.header,
         height: 44,
         center: true,
         semanticsLabel: 'Título da coluna ${index + 1}',
-        style: AppText.display(18, color: AppColors.graphite),
+        style: AppText.display(16, color: AppColors.graphite),
         onChanged: (v) => c.update(() => col.header = v),
       ),
     );

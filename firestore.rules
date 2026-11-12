@@ -13,6 +13,13 @@ service cloud.firestore {
     function gamePath(gameId) {
       return /databases/$(database)/documents/games/$(gameId);
     }
+    // Player photo: none, or the Google account picture. Any other host
+    // could log the IP of everyone who sees the photo.
+    function photoOk(url) {
+      return url == null
+        || (url is string && url.size() < 2048
+            && url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*$'));
+    }
     function gameBefore(gameId) { return get(gamePath(gameId)).data; }
     function gameAfter(gameId) { return getAfter(gamePath(gameId)).data; }
 
@@ -90,7 +97,11 @@ service cloud.firestore {
         return request.resource.data.get('drawSeed', null)
             == resource.data.get('drawSeed', null)
           || (resource.data.get('drawSeed', null) == null
-              && request.resource.data.status in ['finished', 'abandoned']);
+              && request.resource.data.status in ['finished', 'abandoned']
+              // The revealed seed must match the commit published at
+              // creation: the host cannot swap the draw order.
+              && hashing.sha256(request.resource.data.drawSeed).toHexString().lower()
+                   == resource.data.drawCommit.lower());
       }
       function changed() {
         return request.resource.data.diff(resource.data).affectedKeys();
@@ -144,6 +155,7 @@ service cloud.firestore {
         allow read: if canView(gameId, gameBefore(gameId));
         allow create: if verified()
           && request.auth.uid == uid
+          && photoOk(request.resource.data.get('photoUrl', null))
           // The host always plays in their own room (R7), whatever the policy.
           && (request.auth.uid == gameBefore(gameId).hostUid
               || accessAllows(gameBefore(gameId).access))
@@ -168,6 +180,7 @@ service cloud.firestore {
         allow create: if verified()
           && request.auth.uid == uid
           && nicknameOk(request.resource.data.displayName)
+          && photoOk(request.resource.data.get('photoUrl', null))
           && existsAfter(/databases/$(database)/documents/games/$(gameId)/cards/$(uid));
         // Own nickname only, and only before the game starts.
         allow update: if verified()

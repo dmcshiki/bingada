@@ -92,7 +92,7 @@ final class JoinGame {
       player: Player(
         uid: user.uid,
         displayName: Nickname.fromName(user.displayName),
-        photoUrl: user.photoUrl,
+        photoUrl: _googlePhoto(user.photoUrl),
         joinedAt: DateTime.now().toUtc(),
       ),
       email: user.email,
@@ -466,3 +466,12 @@ final class AwardUnderdog {
     return winners;
   }
 }
+
+/// Only the Google account picture is stored (firestore.rules `photoOk`):
+/// any other host could log the IP of everyone who sees the photo.
+String? _googlePhoto(String? url) =>
+    url != null &&
+        url.length < 2048 &&
+        RegExp(r'^https://lh[0-9]+\.googleusercontent\.com/').hasMatch(url)
+    ? url
+    : null;

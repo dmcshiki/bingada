@@ -2,6 +2,8 @@
 const { test, before, after, beforeEach } = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
+const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const {
   initializeTestEnvironment, assertFails, assertSucceeds,
 } = require('@firebase/rules-unit-testing');
@@ -56,10 +58,12 @@ test('draws grow by exactly one, host only', async () => {
   await assertFails(updateDoc(doc(user('a', 'a@acme.dev'), 'games/g1'), { draws: ['0:1', '0:2', '0:3'] }));
 });
 test('immutable fields and drawSeed only at the end', async () => {
-  await seed(game({ status: 'running' }));
+  await seed(game({ status: 'running', drawCommit: sha('x') }));
   const host = user('host', 'h@acme.dev');
   await assertFails(updateDoc(doc(host, 'games/g1'), { salt: 'other' }));
   await assertFails(updateDoc(doc(host, 'games/g1'), { drawSeed: 'x' }));
+  // The revealed seed must match the published commit.
+  await assertFails(updateDoc(doc(host, 'games/g1'), { status: 'finished', drawSeed: 'wrong' }));
   await assertSucceeds(updateDoc(doc(host, 'games/g1'), { status: 'finished', drawSeed: 'x' }));
 });
 test('claim must match current drawIndex and prize', async () => {
