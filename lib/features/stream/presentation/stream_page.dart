@@ -997,12 +997,13 @@ class _StreamPrizes extends StatelessWidget {
                       TextSpan(text: ' · ${modalityName(p)}'),
                     ],
                   ),
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               SizedBox(width: 10 * scale),
-              Flexible(
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 170 * scale),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 10 * scale,

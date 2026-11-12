@@ -121,33 +121,52 @@ class DraftDropdown<T> extends StatelessWidget {
   final double? width;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: semanticsLabel,
-    child: Container(
-      width: width,
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.light, width: 2),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          style: AppText.body(fontSize, color: AppColors.graphite),
+  Widget build(BuildContext context) => Tooltip(
+    // Long options are cut with an ellipsis; hovering shows the full text.
+    message:
+        [
+          for (final (v, l) in items)
+            if (v == value) l,
+        ].firstOrNull ??
+        '',
+    waitDuration: const Duration(milliseconds: 400),
+    child: Semantics(
+      label: semanticsLabel,
+      child: Container(
+        width: width,
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          items: [
-            for (final (v, l) in items)
-              DropdownMenuItem(
-                value: v,
-                child: Text(l, overflow: TextOverflow.ellipsis),
-              ),
-          ],
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
+          border: Border.all(color: AppColors.light, width: 2),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<T>(
+            value: value,
+            isExpanded: true,
+            style: AppText.body(fontSize, color: AppColors.graphite),
+            borderRadius: BorderRadius.circular(12),
+            items: [
+              for (final (v, l) in items)
+                DropdownMenuItem(
+                  value: v,
+                  child: Tooltip(
+                    message: l,
+                    waitDuration: const Duration(milliseconds: 400),
+                    child: Text(
+                      l,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+            ],
+            onChanged: (v) {
+              if (v != null) onChanged(v);
+            },
+          ),
         ),
       ),
     ),

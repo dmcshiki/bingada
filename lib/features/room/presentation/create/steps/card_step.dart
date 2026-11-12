@@ -249,7 +249,7 @@ class _ColumnsTable extends StatelessWidget {
                   const SizedBox(width: 10),
                   SizedBox(width: 90, child: Text('Cor', style: head)),
                   const SizedBox(width: 10),
-                  SizedBox(width: 150, child: Text('Tipo', style: head)),
+                  SizedBox(width: 220, child: Text('Tipo', style: head)),
                   const SizedBox(width: 10),
                   Expanded(child: Text('Conteúdo', style: head)),
                   const SizedBox(width: 10),
@@ -322,7 +322,7 @@ class _ColumnRow extends StatelessWidget {
       ),
     );
     final type = SizedBox(
-      width: 150,
+      width: 220,
       child: DraftDropdown<ColumnKind>(
         semanticsLabel: 'Tipo',
         value: col.kind,

@@ -488,12 +488,14 @@ class _DrawPanel extends StatelessWidget {
           child: Wrap(
             spacing: 12,
             runSpacing: 10,
-            alignment: WrapAlignment.spaceBetween,
+            alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Wrap(
                 spacing: 12,
                 runSpacing: 10,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   AppButton(
                     label: 'Encerrar partida',
@@ -507,7 +509,11 @@ class _DrawPanel extends StatelessWidget {
                         : onEnd,
                   ),
                   if (controller.endBlockedReason case final why?)
-                    Text(why, style: AppText.body(12)),
+                    Text(
+                      why,
+                      textAlign: TextAlign.center,
+                      style: AppText.body(12),
+                    ),
                 ],
               ),
             ],
