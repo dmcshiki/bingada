@@ -313,6 +313,23 @@ final class LocalGameRepository implements GameRepository {
       _watch(_claimsKey(id), () => _claims(id));
 
   @override
+  Future<void> offerRaffleWin(GameId id, Claim claim) async {
+    final game = _requireGame(id);
+    _requireHost(game);
+    final r = game.raffle;
+    if (r == null || r.winner != claim.uid || r.prizeId != claim.prizeId) {
+      throw const GameFailure(GameFailureCode.conflict, 'not the raffle win');
+    }
+    final cid = ClaimId(
+      'raffle_${claim.uid.value}_${claim.drawIndex}_${claim.prizeId.value}',
+    );
+    final claims = _readColl(_claimsKey(id))
+      ..[cid.value] = _map.claimToMap(claim.copyWith(id: cid));
+    _writeJson(_claimsKey(id), claims);
+    _writeGame(game);
+  }
+
+  @override
   Future<void> updateClaim(GameId id, Claim claim) async {
     _requireHost(_requireGame(id));
     final claims = _readColl(_claimsKey(id));

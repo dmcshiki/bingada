@@ -301,6 +301,16 @@ final class FirebaseGameRepository implements GameRepository {
       .map((q) => [for (final d in q.docs) _map.claimFromMap(d.id, d.data())]);
 
   @override
+  Future<void> offerRaffleWin(GameId id, Claim claim) => _guard(() async {
+    final ref = _game(id)
+        .collection('claims')
+        .doc(
+          'raffle_${claim.uid.value}_${claim.drawIndex}_${claim.prizeId.value}',
+        );
+    await ref.set(_map.claimToMap(claim.copyWith(id: ClaimId(ref.id))));
+  });
+
+  @override
   Future<void> updateClaim(GameId id, Claim claim) => _guard(() async {
     await _game(id).collection('claims').doc(claim.id.value).update({
       'status': claim.status.name,

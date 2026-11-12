@@ -131,15 +131,8 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
     });
   }
 
+  // One at a time: the announcement waits for the player's own screens.
   List<Widget> _overlays(Game g) => [
-    if (_c.delivered case final d?)
-      PrizeDeliveredOverlay(
-        delivered: d,
-        game: g,
-        players: _c.players,
-        claims: _c.claims,
-        onClose: _c.dismissDelivered,
-      ),
     if (_choice case final pick?)
       ChoosePrizeOverlay(
         claim: pick,
@@ -157,6 +150,14 @@ class _PlayerGamePageState extends State<PlayerGamePage> {
         claim: _c.followedClaim,
         game: g,
         onClose: _c.dismissOverlay,
+      )
+    else if (_c.delivered case final d?)
+      PrizeDeliveredOverlay(
+        delivered: d,
+        game: g,
+        players: _c.players,
+        claims: _c.claims,
+        onClose: _c.dismissDelivered,
       ),
   ];
 
@@ -812,19 +813,23 @@ class BingoButton extends StatelessWidget {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    blockedReason ?? 'BINGO!',
-                    textAlign: TextAlign.center,
-                    style:
-                        AppText.display(
-                          blocked ? fontSize * 22 / 34 : fontSize,
-                          color: blocked
-                              ? const Color(0xFF6B6869)
-                              : AppColors.white,
-                        ).copyWith(
-                          letterSpacing:
-                              (blocked ? fontSize * 22 / 34 : fontSize) * .06,
-                        ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      blockedReason ?? 'BINGO!',
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style:
+                          AppText.display(
+                            blocked ? fontSize * 22 / 34 : fontSize,
+                            color: blocked
+                                ? const Color(0xFF6B6869)
+                                : AppColors.white,
+                          ).copyWith(
+                            letterSpacing:
+                                (blocked ? fontSize * 22 / 34 : fontSize) * .06,
+                          ),
+                    ),
                   ),
                 ),
               ),

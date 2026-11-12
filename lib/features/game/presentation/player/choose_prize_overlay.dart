@@ -82,8 +82,8 @@ class ChoosePrizeOverlay extends StatelessWidget {
     ];
     final fate = switch (others.length) {
       0 when game.settings.overLimit == OverLimitRule.raffle =>
-        'O prêmio que você não escolher será sorteado entre quem ainda '
-            'pode ganhar.',
+        'O prêmio que você não escolher será sorteado entre os outros '
+            'jogadores (quem já tem prêmio também pode trocar).',
       0 =>
         'O prêmio que você não escolher volta para o jogo (o azarão é '
             'sorteado entre quem ainda pode ganhar).',

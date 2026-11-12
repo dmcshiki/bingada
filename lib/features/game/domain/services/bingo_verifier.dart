@@ -64,6 +64,24 @@ final class BingoVerifier {
     if (block != null) {
       return ClaimResult(verdict: ClaimVerdict.penalized, reason: block.reason);
     }
+    // Who already let this prize go cannot claim it back: otherwise the same
+    // row could be called again and again (win, give up, win…).
+    final gaveUp = history.any(
+      (c) =>
+          c.id != claim.id &&
+          c.uid == claim.uid &&
+          // Only earlier answers (the audit replays the whole history).
+          c.drawIndex < claim.drawIndex &&
+          ((c.status == ClaimStatus.declined &&
+                  (c.offerPrizeId ?? c.prizeId) == prize.id) ||
+              c.releasePrizeId == prize.id),
+    );
+    if (gaveUp) {
+      return const ClaimResult(
+        verdict: ClaimVerdict.notEligible,
+        reason: 'Você já abriu mão deste prêmio',
+      );
+    }
 
     final t = game.template;
     final free = t.freeCellIndex;

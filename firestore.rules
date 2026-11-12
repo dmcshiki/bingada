@@ -221,6 +221,28 @@ service cloud.firestore {
           && request.resource.data.prizeId.size() > 0
           && request.resource.data.prizeId.size() <= 64
           && exists(/databases/$(database)/documents/games/$(gameId)/cards/$(request.auth.uid));
+        // Host: a raffle winner who already holds a prize must choose (keep
+        // or swap). Only for the winner and prize the raffle already shows.
+        allow create: if signedIn()
+          && gameBefore(gameId).hostUid == request.auth.uid
+          && gameBefore(gameId).status == 'running'
+          && gameBefore(gameId).get('raffle', null) != null
+          && gameBefore(gameId).raffle.get('winner', null) == request.resource.data.uid
+          && gameBefore(gameId).raffle.prizeId == request.resource.data.prizeId
+          && claimId == 'raffle_' + request.resource.data.uid + '_'
+               + string(request.resource.data.drawIndex) + '_'
+               + request.resource.data.prizeId
+          && request.resource.data.keys().hasOnly(['uid', 'prizeId',
+               'drawIndex', 'markedCells', 'matched', 'verdict', 'status',
+               'offerPrizeId', 'choice', 'releasePrizeId', 'tieOptIn',
+               'createdAt'])
+          && request.resource.data.drawIndex == gameBefore(gameId).draws.size()
+          && request.resource.data.status == 'awaitingChoice'
+          && request.resource.data.verdict == 'valid'
+          && request.resource.data.offerPrizeId == request.resource.data.prizeId
+          && request.resource.data.get('choice', null) == null
+          && request.resource.data.get('releasePrizeId', null) == null
+          && request.resource.data.get('tieOptIn', false) == false;
         allow update: if signedIn() && (
           (gameBefore(gameId).hostUid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()

@@ -457,6 +457,9 @@ class HostPanelController extends GameWatchController {
           break;
         }
       }
+      // The player writes this field: a prize they do not hold would let
+      // them keep both. Treat it as giving up the offer.
+      if (held == null && heldIds.isNotEmpty) release = offer;
     }
     final pool = [
       for (final o in claims)
@@ -506,6 +509,16 @@ class HostPanelController extends GameWatchController {
     );
   }
 
+  /// Players who already let [prize] go in this game: kept another prize
+  /// over it, or released it for a new one.
+  Set<UserId> _gaveUp(PrizeId prize) => {
+    for (final c in claims)
+      if ((c.status == ClaimStatus.declined &&
+              (c.offerPrizeId ?? c.prizeId) == prize) ||
+          c.releasePrizeId == prize)
+        c.uid,
+  };
+
   /// A prize nobody tied for was given up: back into play, or drawn among
   /// everyone still under the limit (room setting). The azarão is always
   /// drawn, since its race is already over.
@@ -515,15 +528,14 @@ class HostPanelController extends GameWatchController {
     if (prize == null) return _endIfDone();
     final underdog = prize.pattern == PatternKind.underdog;
     if (g.settings.overLimit == OverLimitRule.raffle || underdog) {
+      // Everyone joins, prize holders too (a winner may swap for it), except
+      // whoever already gave this prize up: that set only grows, so a chain
+      // of swaps always ends.
+      final out = _gaveUp(prizeId)..addAll([?releasedBy]);
       final candidates = [
         for (final p in players)
-          if (p.uid != releasedBy &&
-              _policy.isEligible(
-                uid: p.uid,
-                target: prize,
-                winners: g.winners,
-                policy: g.prizePolicy,
-              ))
+          if (!out.contains(p.uid) &&
+              !g.winners.any((w) => w.uid == p.uid && w.prizeId == prizeId))
             p.uid,
       ];
       if (candidates.isNotEmpty) {
@@ -563,6 +575,24 @@ class HostPanelController extends GameWatchController {
           await _award(o, results[o.id], r.prizeId, tieBreak: true);
           return;
         }
+      }
+      // Already holds a prize: they choose (keep or swap) like after a
+      // BINGO; [_applyChoice] passes on whatever they give up.
+      if (_needsChoice(g, uid, r.prizeId)) {
+        await repository.offerRaffleWin(
+          g.id,
+          Claim(
+            id: const ClaimId(''),
+            uid: uid,
+            prizeId: r.prizeId,
+            drawIndex: g.draws.length,
+            status: ClaimStatus.awaitingChoice,
+            verdict: ClaimVerdict.valid,
+            offerPrizeId: r.prizeId,
+            createdAt: DateTime.now(),
+          ),
+        );
+        return;
       }
       final w = Winner(
         prizeId: r.prizeId,

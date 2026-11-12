@@ -245,7 +245,7 @@ class _VerifyCardView extends StatelessWidget {
           background: const Color(0xFFFDE3CC),
           foreground: const Color(0xFF9A4A0B),
           border: const Color(0xFFE8833A),
-          semanticsLabel: '$name, marcado sem ter saído',
+          semanticsLabel: '$name, saiu e não marcou',
         ),
         _CellState.markedNotDrawn => _VerifyCell(
           label: '$base✕',
@@ -302,7 +302,7 @@ class _VerifyCardView extends StatelessWidget {
             _Legend(
               symbol: '●',
               color: Color(0xFFE8833A),
-              text: 'marcado sem ter saído',
+              text: 'saiu e não marcou',
             ),
             _Legend(
               symbol: '✕',

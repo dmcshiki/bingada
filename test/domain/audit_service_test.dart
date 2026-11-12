@@ -134,7 +134,7 @@ void main() {
       drawIndex: x,
       marked: marksAt(1, x),
     );
-    // Alice won Horizontal, then Vertical and gave Horizontal up (limit 1);
+    // Alice won Vertical, then Horizontal and kept Vertical (limit 1);
     // Bob later took Horizontal back from play.
     final winners = [
       Winner(prizeId: p2.id, uid: a, drawIndex: va),
@@ -144,12 +144,12 @@ void main() {
     final claims = [
       c1.copyWith(
         verdict: verdictOf(c1, 0, const []),
-        status: ClaimStatus.confirmed,
+        // Vertical came first here (ball $va): she kept it over Horizontal.
+        status: ClaimStatus.declined,
       ),
       c2.copyWith(
         verdict: verdictOf(c2, 0, const []),
         status: ClaimStatus.confirmed,
-        releasePrizeId: p1.id,
       ),
       c3.copyWith(
         verdict: verdictOf(c3, 1, [winners.first]),

@@ -145,6 +145,12 @@ class FakeRepo implements GameRepository {
   }
 
   @override
+  Future<void> offerRaffleWin(GameId id, Claim claim) async {
+    final c = claim.copyWith(id: ClaimId('r${claims.length + 1}'));
+    emitClaims([...claims, c]);
+  }
+
+  @override
   Future<void> updateClaim(GameId id, Claim claim) async => updated.add(claim);
 
   @override

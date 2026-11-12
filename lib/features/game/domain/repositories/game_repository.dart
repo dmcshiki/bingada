@@ -69,6 +69,11 @@ abstract interface class GameRepository {
     PrizeId? Function(Game game)? prizeFor,
   });
 
+  /// Host only: a raffle winner who is already at the prize limit is asked
+  /// to choose (keep or swap). Creates their `awaitingChoice` claim for the
+  /// raffled prize; the rules bind it to `game.raffle.winner`.
+  Future<void> offerRaffleWin(GameId id, Claim claim);
+
   Stream<List<Claim>> watchClaims(GameId id);
 
   Future<void> updateClaim(GameId id, Claim claim);

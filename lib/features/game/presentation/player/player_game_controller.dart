@@ -302,6 +302,17 @@ class PlayerGameController extends GameWatchController {
     )) {
       return 'BINGO ENVIADO · AGUARDE O HOST';
     }
+    // Every prize in play is one this player already gave up.
+    final gaveUp = {
+      for (final c in claims)
+        if (c.uid == u.uid && c.status == ClaimStatus.declined)
+          c.offerPrizeId ?? c.prizeId,
+      for (final c in claims)
+        if (c.uid == u.uid) ?c.releasePrizeId,
+    };
+    if (open.every((p) => gaveUp.contains(p.id))) {
+      return 'VOCÊ JÁ ABRIU MÃO DESTE PRÊMIO';
+    }
     if (block != null) {
       final left = block.drawsLeft;
       return left == null
