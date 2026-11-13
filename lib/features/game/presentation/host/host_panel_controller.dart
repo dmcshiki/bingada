@@ -364,7 +364,7 @@ class HostPanelController extends GameWatchController {
     final g = game!;
     if (g.status == GameStatus.running &&
         g.draws.isNotEmpty &&
-        g.openPrizes.isEmpty &&
+        _winnable(g).isEmpty &&
         g.raffle == null &&
         !claims.any(
           (c) =>
@@ -409,6 +409,7 @@ class HostPanelController extends GameWatchController {
     ClaimResult? r,
     PrizeId prize, {
     bool tieBreak = false,
+    bool raffled = false,
   }) async {
     final g = await _fresh();
     if (_needsChoice(g, c.uid, prize)) {
@@ -422,6 +423,7 @@ class HostPanelController extends GameWatchController {
         uid: c.uid,
         drawIndex: c.drawIndex,
         tieBreak: tieBreak,
+        raffled: raffled,
       ),
     ]);
   }
@@ -482,6 +484,8 @@ class HostPanelController extends GameWatchController {
           uid: c.uid,
           drawIndex: c.drawIndex,
           tieBreak: tie,
+          // Synthetic claim of a raffle win (see runRaffle).
+          raffled: c.offerPrizeId == c.prizeId,
         ),
       ]);
       await _repoUpdate(g, c.copyWith(status: ClaimStatus.confirmed));
@@ -494,7 +498,13 @@ class HostPanelController extends GameWatchController {
     if (pool.isEmpty) return _releaseFree(released, releasedBy: c.uid);
     if (pool.length == 1) {
       final next = pool.single;
-      await _award(next, results[next.id], released, tieBreak: true);
+      await _award(
+        next,
+        results[next.id],
+        released,
+        tieBreak: true,
+        raffled: true,
+      );
       return;
     }
     // 2+ others bingoed with them: drawn on screen among those.
@@ -572,7 +582,13 @@ class HostPanelController extends GameWatchController {
         if (o.uid == uid &&
             o.prizeId == r.prizeId &&
             o.status == ClaimStatus.tied) {
-          await _award(o, results[o.id], r.prizeId, tieBreak: true);
+          await _award(
+            o,
+            results[o.id],
+            r.prizeId,
+            tieBreak: true,
+            raffled: r.kind == RaffleKind.released,
+          );
           return;
         }
       }
@@ -599,6 +615,7 @@ class HostPanelController extends GameWatchController {
         uid: uid,
         drawIndex: g.draws.length,
         tieBreak: true,
+        raffled: r.kind == RaffleKind.released,
       );
       if (g.prizes.any((p) => p.id == r.prizeId)) {
         await _confirmPrize(g, [w]);
@@ -701,9 +718,19 @@ class HostPanelController extends GameWatchController {
       _run(() => _releaseFree(prize));
 
   /// Ends the game once no prize is open and nobody is still choosing.
+  /// Open prizes someone can still win. A prize every player already gave
+  /// up stays unawarded: waiting for it would leave the game stuck.
+  List<Prize> _winnable(Game g) {
+    final everyone = {for (final p in players) p.uid};
+    return [
+      for (final p in g.openPrizes)
+        if (everyone.isEmpty || !_gaveUp(p.id).containsAll(everyone)) p,
+    ];
+  }
+
   Future<void> _endIfDone() async {
     final g = await _fresh();
-    if (g.status != GameStatus.running || g.openPrizes.isNotEmpty) return;
+    if (g.status != GameStatus.running || _winnable(g).isNotEmpty) return;
     if (claims.any((c) => c.status == ClaimStatus.awaitingChoice)) return;
     await _endGame(g);
   }

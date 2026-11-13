@@ -25,7 +25,7 @@ const seed = (data) => env.withSecurityRulesDisabled((c) =>
 const joinBatch = (db, uid) => {
   const b = writeBatch(db);
   b.set(doc(db, `games/g1/cards/${uid}`), { items: Array(25).fill('0:0') });
-  b.set(doc(db, `games/g1/players/${uid}`), { displayName: uid });
+  b.set(doc(db, `games/g1/players/${uid}`), { displayName: `Jogador ${uid}` });
   b.update(doc(db, 'games/g1'), { playerCount: increment(1) });
   return b.commit();
 };
@@ -87,4 +87,23 @@ test('claim id is bound to its owner, ball and prize', async () => {
   // Forged fields are refused.
   await assertFails(setDoc(doc(a, 'games/g1/claims/a_1_p1'), { ...base, matched: [{ kind: 'full', index: 0 }] }));
   await assertFails(setDoc(doc(a, 'games/g1/claims/a_1_p1'), { ...base, hack: true }));
+});
+test('host offers a raffle win only to the raffle winner', async () => {
+  await seed(game({
+    status: 'running', draws: ['0:1', '0:2'],
+    raffle: { prizeId: 'p1', candidates: ['a', 'b'], kind: 'released', winner: 'a' },
+  }));
+  const host = user('host', 'h@acme.dev');
+  const offer = (uid, prizeId = 'p1') => ({
+    uid, prizeId, drawIndex: 2, status: 'awaitingChoice', verdict: 'valid',
+    offerPrizeId: prizeId, choice: null, releasePrizeId: null, tieOptIn: false,
+  });
+  await assertSucceeds(setDoc(doc(host, 'games/g1/claims/raffle_a_2_p1'), offer('a')));
+  // Not the winner, wrong prize, or not the host.
+  await assertFails(setDoc(doc(host, 'games/g1/claims/raffle_b_2_p1'), offer('b')));
+  await assertFails(setDoc(doc(host, 'games/g1/claims/raffle_a_2_p2'), offer('a', 'p2')));
+  await assertFails(setDoc(doc(user('b', 'b@acme.dev'), 'games/g1/claims/raffle_a_2_p1'), offer('a')));
+  // Pre-answered offers are refused.
+  await assertFails(setDoc(doc(host, 'games/g1/claims/raffle_a_2_p1x'),
+    { ...offer('a'), releasePrizeId: 'p2' }));
 });

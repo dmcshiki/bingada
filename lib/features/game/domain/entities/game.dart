@@ -111,6 +111,9 @@ abstract class Winner with _$Winner {
     required UserId uid,
     required int drawIndex,
     @Default(false) bool tieBreak,
+
+    /// Got it in the raffle of a prize someone else gave up.
+    @Default(false) bool raffled,
   }) = _Winner;
 }
 

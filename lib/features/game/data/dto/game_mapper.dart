@@ -265,6 +265,7 @@ final class GameMapper {
     'uid': w.uid.value,
     'drawIndex': w.drawIndex,
     'tieBreak': w.tieBreak,
+    if (w.raffled) 'raffled': true,
   };
 
   Winner winnerFromMap(Json m) => Winner(
@@ -272,6 +273,7 @@ final class GameMapper {
     uid: UserId(m['uid']! as String),
     drawIndex: (m['drawIndex']! as num).toInt(),
     tieBreak: m['tieBreak'] as bool? ?? false,
+    raffled: m['raffled'] as bool? ?? false,
   );
 
   // ------------------------------------------------------------------- game

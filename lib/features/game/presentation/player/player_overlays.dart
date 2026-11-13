@@ -32,8 +32,14 @@ class ClaimResultOverlay extends StatelessWidget {
     final prize = claim == null
         ? null
         : prizeById(game, claim!.offerPrizeId ?? claim!.prizeId);
-    final how = describeMatches(claim?.matched ?? const [], t, prize: prize);
-    final current = game.currentPrize;
+    // Wrong pattern: name what actually closed, not the prize claimed.
+    final how = describeMatches(
+      claim?.matched ?? const [],
+      t,
+      prize: kind == ClaimOverlayKind.wrongPattern ? null : prize,
+    );
+    final openNames = {for (final p in game.openPrizes) modalityName(p)}
+        .join(' ou ');
     final (
       icon,
       iconSize,
@@ -85,7 +91,7 @@ class ClaimResultOverlay extends StatelessWidget {
         AppColors.graphite,
         'MODALIDADE ERRADA',
         '${claim?.matched.isNotEmpty ?? false ? 'Sua $how fechou' : 'Você fechou outro padrão'}, '
-            'mas agora vale ${current == null ? 'outro prêmio' : modalityName(current)}. '
+            'mas agora vale ${openNames.isEmpty ? 'outro prêmio' : openNames}. '
             'Guarde a emoção para o próximo prêmio.',
         'Voltar à cartela',
       ),

@@ -1278,7 +1278,8 @@ $ClaimPenaltyPolicyCopyWith<$Res> get claimPenalty {
 /// @nodoc
 mixin _$Winner {
 
- PrizeId get prizeId; UserId get uid; int get drawIndex; bool get tieBreak;
+ PrizeId get prizeId; UserId get uid; int get drawIndex; bool get tieBreak;/// Got it in the raffle of a prize someone else gave up.
+ bool get raffled;
 /// Create a copy of Winner
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1290,20 +1291,20 @@ $WinnerCopyWith<Winner> get copyWith => _$WinnerCopyWithImpl<Winner>(this as Win
 @override
 bool operator ==(Object other) {
   final _this = this as Winner;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Winner&&(identical(other.prizeId, _this.prizeId) || other.prizeId == _this.prizeId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.drawIndex, _this.drawIndex) || other.drawIndex == _this.drawIndex)&&(identical(other.tieBreak, _this.tieBreak) || other.tieBreak == _this.tieBreak));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Winner&&(identical(other.prizeId, _this.prizeId) || other.prizeId == _this.prizeId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.drawIndex, _this.drawIndex) || other.drawIndex == _this.drawIndex)&&(identical(other.tieBreak, _this.tieBreak) || other.tieBreak == _this.tieBreak)&&(identical(other.raffled, _this.raffled) || other.raffled == _this.raffled));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Winner;
-  return Object.hash(runtimeType,_this.prizeId,_this.uid,_this.drawIndex,_this.tieBreak);
+  return Object.hash(runtimeType,_this.prizeId,_this.uid,_this.drawIndex,_this.tieBreak,_this.raffled);
 }
 
 @override
 String toString() {
   final _this = this as Winner;
-  return 'Winner(prizeId: ${_this.prizeId}, uid: ${_this.uid}, drawIndex: ${_this.drawIndex}, tieBreak: ${_this.tieBreak})';
+  return 'Winner(prizeId: ${_this.prizeId}, uid: ${_this.uid}, drawIndex: ${_this.drawIndex}, tieBreak: ${_this.tieBreak}, raffled: ${_this.raffled})';
 }
 
 
@@ -1314,7 +1315,7 @@ abstract mixin class $WinnerCopyWith<$Res>  {
   factory $WinnerCopyWith(Winner value, $Res Function(Winner) _then) = _$WinnerCopyWithImpl;
 @useResult
 $Res call({
- PrizeId prizeId, UserId uid, int drawIndex, bool tieBreak
+ PrizeId prizeId, UserId uid, int drawIndex, bool tieBreak, bool raffled
 });
 
 
@@ -1331,12 +1332,13 @@ class _$WinnerCopyWithImpl<$Res>
 
 /// Create a copy of Winner
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? prizeId = null,Object? uid = null,Object? drawIndex = null,Object? tieBreak = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? prizeId = null,Object? uid = null,Object? drawIndex = null,Object? tieBreak = null,Object? raffled = null,}) {
   return _then(Winner(
 prizeId: null == prizeId ? _self.prizeId : prizeId // ignore: cast_nullable_to_non_nullable
 as PrizeId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as UserId,drawIndex: null == drawIndex ? _self.drawIndex : drawIndex // ignore: cast_nullable_to_non_nullable
 as int,tieBreak: null == tieBreak ? _self.tieBreak : tieBreak // ignore: cast_nullable_to_non_nullable
+as bool,raffled: null == raffled ? _self.raffled : raffled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1422,10 +1424,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak,  bool raffled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Winner() when $default != null:
-return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
+return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak,_that.raffled);case _:
   return orElse();
 
 }
@@ -1443,10 +1445,10 @@ return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak,  bool raffled)  $default,) {final _that = this;
 switch (_that) {
 case _Winner():
-return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
+return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak,_that.raffled);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1463,10 +1465,10 @@ return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PrizeId prizeId,  UserId uid,  int drawIndex,  bool tieBreak,  bool raffled)?  $default,) {final _that = this;
 switch (_that) {
 case _Winner() when $default != null:
-return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
+return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak,_that.raffled);case _:
   return null;
 
 }
@@ -1478,13 +1480,15 @@ return $default(_that.prizeId,_that.uid,_that.drawIndex,_that.tieBreak);case _:
 
 
 class _Winner implements Winner {
-  const _Winner({required this.prizeId, required this.uid, required this.drawIndex, this.tieBreak = false});
+  const _Winner({required this.prizeId, required this.uid, required this.drawIndex, this.tieBreak = false, this.raffled = false});
   
 
 @override final  PrizeId prizeId;
 @override final  UserId uid;
 @override final  int drawIndex;
 @override@JsonKey() final  bool tieBreak;
+/// Got it in the raffle of a prize someone else gave up.
+@override@JsonKey() final  bool raffled;
 
 /// Create a copy of Winner
 /// with the given fields replaced by the non-null parameter values.
@@ -1496,18 +1500,18 @@ _$WinnerCopyWith<_Winner> get copyWith => __$WinnerCopyWithImpl<_Winner>(this, _
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Winner&&(identical(other.prizeId, prizeId) || other.prizeId == prizeId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.drawIndex, drawIndex) || other.drawIndex == drawIndex)&&(identical(other.tieBreak, tieBreak) || other.tieBreak == tieBreak));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Winner&&(identical(other.prizeId, prizeId) || other.prizeId == prizeId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.drawIndex, drawIndex) || other.drawIndex == drawIndex)&&(identical(other.tieBreak, tieBreak) || other.tieBreak == tieBreak)&&(identical(other.raffled, raffled) || other.raffled == raffled));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,prizeId,uid,drawIndex,tieBreak);
+    return Object.hash(runtimeType,prizeId,uid,drawIndex,tieBreak,raffled);
 }
 
 @override
 String toString() {
-    return 'Winner(prizeId: $prizeId, uid: $uid, drawIndex: $drawIndex, tieBreak: $tieBreak)';
+    return 'Winner(prizeId: $prizeId, uid: $uid, drawIndex: $drawIndex, tieBreak: $tieBreak, raffled: $raffled)';
 }
 
 
@@ -1518,7 +1522,7 @@ abstract mixin class _$WinnerCopyWith<$Res> implements $WinnerCopyWith<$Res> {
   factory _$WinnerCopyWith(_Winner value, $Res Function(_Winner) _then) = __$WinnerCopyWithImpl;
 @override @useResult
 $Res call({
- PrizeId prizeId, UserId uid, int drawIndex, bool tieBreak
+ PrizeId prizeId, UserId uid, int drawIndex, bool tieBreak, bool raffled
 });
 
 
@@ -1535,12 +1539,13 @@ class __$WinnerCopyWithImpl<$Res>
 
 /// Create a copy of Winner
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? prizeId = null,Object? uid = null,Object? drawIndex = null,Object? tieBreak = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? prizeId = null,Object? uid = null,Object? drawIndex = null,Object? tieBreak = null,Object? raffled = null,}) {
   return _then(_Winner(
 prizeId: null == prizeId ? _self.prizeId : prizeId // ignore: cast_nullable_to_non_nullable
 as PrizeId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as UserId,drawIndex: null == drawIndex ? _self.drawIndex : drawIndex // ignore: cast_nullable_to_non_nullable
 as int,tieBreak: null == tieBreak ? _self.tieBreak : tieBreak // ignore: cast_nullable_to_non_nullable
+as bool,raffled: null == raffled ? _self.raffled : raffled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -213,6 +213,7 @@ Future<List<String>> _drive(
 
 void main() {
   _forgedRelease();
+  _holderWinsRaffle();
   _verifierGaveUp();
   test(
     '(a) A keeps Cartela cheia; Vertical raffled; each holds <= 1',
@@ -226,6 +227,7 @@ void main() {
       _expectInvariant(g);
       expect(_holdings(g)[_a], [_full], reason: '$log');
       expect(g.winnersOf(_ver), hasLength(1), reason: 'Vertical lost: $log');
+      expect(g.winnersOf(_ver).single.raffled, isTrue);
     },
   );
 
@@ -275,7 +277,11 @@ void main() {
       );
       // Either assigned, or explicitly unassigned while the game can still end.
       if (g.winnersOf(_full).isEmpty) {
-        expect(h.endBlockedReason, isNull, reason: 'game stuck: $log');
+        expect(
+          h.endBlockedReason == null || h.isFinished,
+          isTrue,
+          reason: 'game stuck: $log',
+        );
       }
     },
   );
@@ -343,4 +349,30 @@ void _verifierGaveUp() {
     );
     expect(r.verdict, ClaimVerdict.notEligible);
   });
+}
+
+void _holderWinsRaffle() {
+  test(
+    '(g) raffle winner holding a prize chooses; dead prize ends the game',
+    () async {
+      final (h, repo) = await _setup([_w(_hor, _b), _w(_ver, _a)], [_a, _b]);
+      await h.confirmSingle(_fullClaim(_a));
+      final log = await _drive(h, repo, (c, g) {
+        final offer = c.offerPrizeId ?? c.prizeId;
+        if (c.id == const ClaimId('full-a')) return _ver; // A keeps Cheia
+        if (c.uid == _b) return _hor; // B swaps H for V
+        return offer; // A keeps Cheia over H
+      });
+      final g = repo.game;
+      _expectInvariant(g);
+      // B won V in a raffle while holding H: asked, swapped.
+      expect(log, contains('b releases p1'), reason: '$log');
+      expect(_holdings(g)[_b], [_ver], reason: '$log');
+      expect(g.winnersOf(_ver).single.raffled, isTrue);
+      expect(_holdings(g)[_a], [_full], reason: '$log');
+      // Both gave H up: nobody can win it, so the game ends by itself.
+      expect(g.winnersOf(_hor), isEmpty);
+      expect(repo.finishCalls, 1, reason: '$log');
+    },
+  );
 }

@@ -347,7 +347,10 @@ class ResultView extends StatelessWidget {
   String _how(Prize p, Winner w, {required bool ends}) {
     final parts = [
       modalityName(p),
-      if (w.tieBreak) 'venceu o desempate',
+      if (w.raffled)
+        'ganhou no sorteio de um prêmio liberado'
+      else if (w.tieBreak)
+        'venceu o desempate',
       if (ends) 'encerrou o jogo',
     ];
     return parts.join(' · ');
@@ -422,6 +425,10 @@ class _UnderdogBox extends StatelessWidget {
   String _detail(Winner w) {
     final n = w.drawIndex;
     final balls = n == 1 ? '1 número' : '$n números';
+    if (w.raffled) {
+      return 'Quem tinha este prêmio abriu mão dele, e ele foi sorteado de '
+          'novo entre os outros.';
+    }
     if (w.tieBreak) {
       return 'Saiu junto com outros na mesma rodada, depois de $balls, '
           'e venceu o sorteio de desempate.';
